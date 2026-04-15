@@ -1,0 +1,141 @@
+<div class="auth-page auth-page--register" @authFieldsEnter>
+  <header class="auth-page__header">
+    <h1 class="auth-page__title">Create account</h1>
+    <p class="auth-page__lead">Join VisitFlow — TE Connectivity</p>
+  </header>
+
+  @if (showSuccess) {
+    <div class="auth-success" @authSuccessPop>
+      <span class="auth-success__ring" aria-hidden="true"></span>
+      <i class="pi pi-check auth-success__icon" aria-hidden="true"></i>
+      <span class="auth-success__text">Account created</span>
+    </div>
+  }
+
+  <div class="auth-page__scroll">
+    <form
+      class="auth-page__form"
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      [@authFormShake]="shakeState"
+    >
+      <div class="vf-anim-field">
+        <app-floating-input
+          [control]="nameCtrl"
+          label="Full name"
+          type="text"
+          icon="pi pi-user"
+          inputId="reg-name"
+          autocomplete="name"
+        />
+        @if (name?.invalid && name?.touched) {
+          <p class="auth-page__err">Name is required.</p>
+        }
+      </div>
+
+      <div class="vf-anim-field">
+        <app-floating-input
+          [control]="emailCtrl"
+          label="Email"
+          type="email"
+          icon="pi pi-envelope"
+          inputId="reg-email"
+          autocomplete="email"
+        />
+        @if (email?.invalid && email?.touched) {
+          <p class="auth-page__err">Enter a valid email address.</p>
+        }
+      </div>
+
+      <div class="vf-anim-field">
+        <app-floating-select
+          [control]="roleCtrl"
+          label="Role"
+          inputId="reg-role"
+          [options]="roleOptions"
+        />
+        @if (role?.invalid && role?.touched) {
+          <p class="auth-page__err">Role is required.</p>
+        }
+      </div>
+
+      <div class="vf-anim-field">
+        <app-floating-input
+          [control]="passwordCtrl"
+          label="Password"
+          type="password"
+          icon="pi pi-lock"
+          inputId="reg-password"
+          autocomplete="new-password"
+          [showToggle]="true"
+        />
+        @if (password?.invalid && password?.touched) {
+          <p class="auth-page__err">Password must be at least 6 characters.</p>
+        }
+        @if (passwordCtrl.value) {
+          <div class="pw-strength" [class]="strengthClass">
+            <div class="pw-strength__meta">
+              <span>Strength</span>
+              <span class="pw-strength__label">{{ strengthLabel }}</span>
+            </div>
+            <div class="pw-strength__track">
+              <div
+                class="pw-strength__bar"
+                [style.width.%]="passwordStrength"
+              ></div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="vf-anim-field">
+        <app-floating-input
+          [control]="confirmCtrl"
+          label="Confirm password"
+          type="password"
+          icon="pi pi-lock"
+          inputId="reg-confirm"
+          autocomplete="new-password"
+          [showToggle]="true"
+        />
+        @if (confirmPassword?.invalid && confirmPassword?.touched) {
+          <p class="auth-page__err">Confirmation is required.</p>
+        }
+        @if (
+          confirmPassword?.touched &&
+          password?.value &&
+          confirmPassword?.value &&
+          !confirmMatch
+        ) {
+          <p class="auth-page__err">Passwords do not match.</p>
+        }
+        @if (confirmMatch && confirmPassword?.touched) {
+          <p class="auth-page__ok">
+            <i class="pi pi-check" aria-hidden="true"></i> Passwords match
+          </p>
+        }
+      </div>
+
+      @if (error) {
+        <p class="auth-page__err auth-page__err--global">{{ error }}</p>
+      }
+
+      <button
+        type="submit"
+        class="auth-btn"
+        [disabled]="loading"
+        [class.auth-btn--loading]="loading"
+      >
+        @if (loading) {
+          <span class="auth-btn__spinner" aria-hidden="true"></span>
+        }
+        <span>{{ loading ? 'Creating account…' : 'Create account' }}</span>
+      </button>
+    </form>
+  </div>
+
+  <p class="auth-page__footer">
+    Already have an account?
+    <a routerLink="/login">Sign in</a>
+  </p>
+</div>

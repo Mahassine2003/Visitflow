@@ -1,0 +1,56 @@
+<div class="space-y-8">
+  <h2 class="text-2xl font-semibold text-slate-800">HSE dashboard</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <app-card *ngFor="let item of stats" [title]="item.label">
+      <div class="text-3xl font-semibold text-slate-900">{{ item.value }}</div>
+    </app-card>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="card xl:col-span-1">
+      <h3 class="text-sm font-medium text-slate-700 mb-3">
+        Intervention breakdown (HSE)
+      </h3>
+      <p-chart
+        type="doughnut"
+        [data]="interventionChartData"
+        [options]="interventionChartOptions"
+        *ngIf="interventionChartData"
+      ></p-chart>
+      <p *ngIf="!interventionChartData" class="text-xs text-slate-500 mt-2">
+        No intervention data yet.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3 class="text-sm font-medium text-slate-700 mb-3">
+        Interventions per month
+      </h3>
+      <p-chart
+        type="bar"
+        [data]="interventionsPerMonthData"
+        [options]="interventionsPerMonthOptions"
+        *ngIf="interventionsPerMonthData"
+      ></p-chart>
+      <p *ngIf="!interventionsPerMonthData" class="text-xs text-slate-500 mt-2">
+        No monthly history yet.
+      </p>
+    </div>
+
+    <div class="card xl:col-span-1">
+      <h3 class="text-sm font-medium text-slate-700 mb-3">
+        Interventions by work type
+      </h3>
+      <p-chart
+        type="bar"
+        [data]="interventionsPerTypeData"
+        [options]="interventionsPerTypeOptions"
+        *ngIf="interventionsPerTypeData"
+      ></p-chart>
+      <p *ngIf="!interventionsPerTypeData" class="text-xs text-slate-500 mt-2">
+        No data by type yet.
+      </p>
+    </div>
+  </div>
+</div>

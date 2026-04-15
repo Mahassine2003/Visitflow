@@ -1,0 +1,332 @@
+<div class="page-enter space-y-4">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Add Personnel</h1>
+      <p class="page-subtitle">Wizard flow to register personnel and compliance documents.</p>
+    </div>
+  </div>
+
+  <p-stepper [(activeStep)]="activeStep">
+    <p-stepperPanel header="Information">
+      <ng-template pTemplate="content">
+        <form [formGroup]="personalForm" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Full name</label>
+              <input formControlName="fullName" class="input" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">National ID (CIN)</label>
+              <input formControlName="cin" class="input" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Phone</label>
+              <input formControlName="phone" class="input" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Role / activity</label>
+              <input formControlName="position" class="input" />
+            </div>
+          </div>
+
+          <section class="insurance-section">
+            <div class="insurance-header">
+              <div class="insurance-header__left">
+                <div class="insurance-header__icon-wrap" aria-hidden="true">
+                  <svg class="insurance-header__shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="insurance-header__title">Insurance</h3>
+                  <p class="insurance-header__sub">Upload or enter manually</p>
+                </div>
+              </div>
+              <div class="mode-pills" role="group" aria-label="Insurance upload mode">
+                <button
+                  type="button"
+                  class="mode-pills__btn"
+                  [class.mode-pills__btn--ai-active]="insuranceSource === 'ai'"
+                  (click)="setInsuranceSource('ai')"
+                >
+                  <svg class="mode-pills__ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                  AI Analysis
+                </button>
+                <button
+                  type="button"
+                  class="mode-pills__btn mode-pills__btn--long"
+                  [class.mode-pills__btn--manual-active]="insuranceSource === 'manual'"
+                  (click)="setInsuranceSource('manual')"
+                >
+                  <svg class="mode-pills__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  Manual upload (no AI)
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="insuranceSource === 'ai'" @modeSwitch class="ai-mode-body">
+              <app-insurance-upload
+                [label]="''"
+                (resultChange)="insurance1Result = $event"
+                (fileChange)="insuranceFile = $event"
+              ></app-insurance-upload>
+            </div>
+
+            <div *ngIf="insuranceSource === 'manual'" @modeSwitch class="manual-mode-body">
+              <div class="manual-notice">
+                <svg class="manual-notice__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <div>
+                  <p class="manual-notice__title">Manual Entry — Not AI Verified</p>
+                  <p class="manual-notice__desc">
+                    Data entered manually will not be verified by AI. Ensure all information matches the official document.
+                  </p>
+                </div>
+              </div>
+
+              <div class="manual-fields">
+                <div class="manual-fields__field manual-fields__field--full">
+                  <label class="form-field__label" for="wizardManualInsuranceFileInput">
+                    <span class="form-field__icon form-field__icon--file" aria-hidden="true">#</span>
+                    Insurance file
+                  </label>
+                  <input
+                    #manualInsuranceFile
+                    id="wizardManualInsuranceFileInput"
+                    type="file"
+                    class="manual-file-input-hidden"
+                    accept="image/*,.pdf,.doc,.docx,application/pdf"
+                    (change)="onManualInsuranceFileChange($event)"
+                  />
+                  <div
+                    class="manual-upload-zone"
+                    [class.manual-upload-zone--drag]="manualFileDragOver"
+                    (click)="manualInsuranceFile.click()"
+                    (dragover)="onManualInsuranceDragOver($event)"
+                    (dragleave)="onManualInsuranceDragLeave($event)"
+                    (drop)="onManualInsuranceDrop($event)"
+                  >
+                    <ng-container *ngIf="!insuranceFile">
+                      <div class="manual-upload-zone__icon-wrap" aria-hidden="true">
+                        <svg class="manual-upload-zone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                      </div>
+                      <p class="manual-upload-zone__title">Drop your file or click to browse</p>
+                      <button
+                        type="button"
+                        class="manual-upload-zone__browse"
+                        (click)="$event.stopPropagation(); manualInsuranceFile.click()"
+                      >
+                        Choose file
+                      </button>
+                      <p class="manual-upload-zone__hint">PDF, JPG, PNG, Word — required for save</p>
+                    </ng-container>
+                    <div *ngIf="insuranceFile" class="manual-file-chip">
+                      <div class="manual-file-chip__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                      </div>
+                      <div class="manual-file-chip__meta">
+                        <span class="manual-file-chip__name">{{ insuranceFile.name }}</span>
+                        <span class="manual-file-chip__size">{{ formatManualFileSize(insuranceFile.size) }}</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="manual-file-chip__remove"
+                        (click)="$event.stopPropagation(); clearManualInsuranceFile()"
+                        aria-label="Remove file"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="manual-fields__field">
+                  <label class="form-field__label">
+                    <span class="form-field__icon form-field__icon--start" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </span>
+                    Start date (optional)
+                  </label>
+                  <input
+                    type="date"
+                    class="manual-fields__input"
+                    [(ngModel)]="manualInsuranceIssue"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </div>
+                <div class="manual-fields__field">
+                  <label class="form-field__label">
+                    <span class="form-field__icon form-field__icon--end" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </span>
+                    End date (optional)
+                  </label>
+                  <input
+                    type="date"
+                    class="manual-fields__input"
+                    [(ngModel)]="manualInsuranceExpiry"
+                    [ngModelOptions]="{ standalone: true }"
+                  />
+                </div>
+                <div class="manual-fields__field manual-fields__field--full manual-fields__field--check">
+                  <label class="manual-fields__checkbox">
+                    <input type="checkbox" [(ngModel)]="manualInsuranceValid" [ngModelOptions]="{ standalone: true }" />
+                    Mark insurance as valid
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div
+              *ngIf="insuranceSource === 'manual' && insuranceFile"
+              class="insurance-mode-footnote insurance-mode-footnote--manual"
+              role="status"
+            >
+              <span class="insurance-mode-footnote__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+              </span>
+              <p class="insurance-mode-footnote__text">
+                <strong>Manual mode.</strong> This insurance was added through manual entry: it is not verified by AI. The dates
+                and validity you provide are your responsibility.
+              </p>
+            </div>
+
+            <div
+              *ngIf="insuranceSource === 'ai' && insurance1Result"
+              class="insurance-mode-footnote insurance-mode-footnote--ai"
+              [class.insurance-mode-footnote--ai-warn]="!insurance1Result.isValid"
+              role="status"
+            >
+              <span class="insurance-mode-footnote__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+              </span>
+              <p class="insurance-mode-footnote__text" *ngIf="insurance1Result.isValid">
+                <strong>Analyse IA.</strong> Cette assurance a été traitée avec l’analyse IA : le document a été soumis à une
+                vérification automatique (résultat favorable).
+              </p>
+              <p class="insurance-mode-footnote__text" *ngIf="!insurance1Result.isValid">
+                <strong>Analyse IA.</strong> Cette assurance a été analysée par l’IA : le résultat indique que le document ne
+                satisfait pas les critères automatiques. Vous pouvez corriger le fichier ou passer en saisie manuelle.
+              </p>
+            </div>
+          </section>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Supplier</label>
+            <select formControlName="supplierId" class="input w-full">
+              <option [ngValue]="null">Select a supplier</option>
+              <option *ngFor="let s of suppliers" [ngValue]="s.id">{{ s.companyName }}</option>
+            </select>
+          </div>
+
+          <div>
+            <span class="block text-sm font-medium text-slate-700 mb-2">Work types</span>
+            <div
+              class="tow-list max-h-[28rem] overflow-y-auto rounded-xl border border-slate-200/80 p-3"
+              role="group"
+              aria-label="Work types"
+            >
+              <div class="tow-grid">
+                <button
+                  type="button"
+                  *ngFor="let t of typeOfWorks"
+                  class="tow-card"
+                  [class.tow-card--selected]="isTypeSelected(t.id)"
+                  [attr.aria-pressed]="isTypeSelected(t.id)"
+                  [attr.aria-label]="
+                    t.name + (isTypeSelected(t.id) ? ', selected' : ', not selected')
+                  "
+                  (click)="toggleType(t.id)"
+                >
+                  <span class="tow-card__indicator" aria-hidden="true">
+                    <svg class="tow-card__check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path class="tow-card__check-path" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span class="tow-card__body">
+                    <span class="tow-card__title">{{ t.name }}</span>
+                    <span *ngIf="t.description" class="tow-card__desc">{{ t.description }}</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <p *ngIf="requirementsLoading" class="text-sm text-slate-500">Loading requirements…</p>
+
+          <ng-container *ngIf="selectedTypeOfWorkIds.length > 0 && !requirementsLoading">
+            <div class="space-y-4 pt-2 border-t border-slate-200">
+              <span class="block text-sm font-medium text-slate-700">Expected documents</span>
+
+              <ng-container *ngIf="hasDocumentRequirements">
+                <div
+                  *ngFor="let g of documentGroupsWithDocs; trackBy: trackWorkTypeGroup; let first = first"
+                  class="space-y-3"
+                  [class.pt-4]="!first"
+                  [class.border-t]="!first"
+                  [class.border-slate-200]="!first"
+                >
+                  <p class="text-base font-semibold text-slate-900">{{ g.typeOfWorkName }} :</p>
+                  <div class="space-y-3">
+                    <app-document-upload-ia
+                      *ngFor="let r of g.documents; trackBy: trackDocumentReq"
+                      [fieldKey]="'req-' + r.id"
+                      [label]="r.title + ' (' + r.type + ')'"
+                      (resultChange)="setOptionalResult(r.id, $event)"
+                      (fileChange)="setOptionalFile(r.id, $event)"
+                    ></app-document-upload-ia>
+                  </div>
+                </div>
+              </ng-container>
+
+              <p *ngIf="!hasDocumentRequirements" class="text-sm text-slate-600">
+                No additional documents required for these work types.
+              </p>
+            </div>
+          </ng-container>
+        </form>
+
+        <p *ngIf="docError" class="text-sm text-red-600 mt-2">{{ docError }}</p>
+
+        <div class="mt-4 flex justify-end">
+          <button type="button" class="btn-primary" (click)="submit()">Save</button>
+        </div>
+      </ng-template>
+    </p-stepperPanel>
+  </p-stepper>
+</div>

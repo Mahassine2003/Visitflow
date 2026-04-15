@@ -1,0 +1,151 @@
+<input
+  #fileInput
+  type="file"
+  hidden
+  accept="image/*,.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  (change)="onFileSelected($event)"
+/>
+
+<ng-container *ngIf="!file">
+  <div
+    @fileAppear
+    class="upload-zone"
+    [class.upload-zone--drag]="isDragOver"
+    (click)="fileInput.click()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <div class="upload-zone__icon-wrap" aria-hidden="true">
+      <svg class="upload-zone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" y1="3" x2="12" y2="15" />
+      </svg>
+    </div>
+    <p class="upload-zone__title">Drop your file here</p>
+    <div class="upload-zone__or" aria-hidden="true">
+      <span class="upload-zone__or-line"></span>
+      <span class="upload-zone__or-text">or</span>
+      <span class="upload-zone__or-line"></span>
+    </div>
+    <button
+      type="button"
+      class="upload-zone__browse"
+      (click)="$event.stopPropagation(); fileInput.click()"
+    >
+      Browse files
+    </button>
+    <p class="upload-zone__formats">PDF, JPG, PNG · Max 10MB</p>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="file">
+  <div @fileAppear class="file-selected-card">
+    <div class="file-selected-card__bar">
+      <div class="file-selected-card__left">
+        <div class="file-selected-card__file-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" />
+            <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="file-selected-card__meta">
+          <div class="file-name">{{ file.name }}</div>
+          <div class="file-size">{{ formatSize(file.size) }}</div>
+        </div>
+      </div>
+      <button type="button" class="file-selected-card__remove" (click)="clearFile()" aria-label="Remove file">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="file-selected-card__actions">
+      <button type="button" class="btn-analyze" [disabled]="loading" (click)="detect()">
+        <span *ngIf="loading" class="btn-analyze__spinner" aria-hidden="true"></span>
+        <svg *ngIf="!loading" class="btn-analyze__zap" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        {{ loading ? 'Analyzing…' : 'Analyze' }}
+      </button>
+
+      <button *ngIf="viewUrl" type="button" class="btn-view-file" (click)="openFile()">
+        <svg class="btn-view-file__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        View file
+      </button>
+
+      <div class="file-selected-card__status" *ngIf="loading">
+        <span class="file-selected-card__status-spinner" aria-hidden="true"></span>
+        <span>Analyzing…</span>
+      </div>
+
+      <div class="file-selected-card__status file-selected-card__status--ok" *ngIf="!loading && result?.isValid && !detectError">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+        <span>Verified</span>
+      </div>
+
+      <div class="file-selected-card__status file-selected-card__status--bad" *ngIf="!loading && result && !result.isValid && !detectError">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span>Failed</span>
+      </div>
+
+      <div class="file-selected-card__status file-selected-card__status--bad" *ngIf="!loading && detectError">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span>Failed</span>
+      </div>
+    </div>
+
+    <p *ngIf="detectError" class="file-selected-card__api-err">{{ detectError }}</p>
+
+    <div *ngIf="result && result.isValid" class="analysis-result-panel">
+      <div class="analysis-result-panel__head">
+        <svg class="analysis-result-panel__shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="M9 12l2 2 4-4" />
+        </svg>
+        <span class="analysis-result-panel__title">AI Verified</span>
+        <span class="analysis-result-panel__badge">✓ Done</span>
+      </div>
+      <div class="analysis-result-panel__rows">
+        <div
+          class="analysis-result-panel__row"
+          *ngIf="result.year !== null && result.year >= 2000 && result.year <= 2100"
+        >
+          <span class="analysis-result-panel__label">Year</span>
+          <span class="analysis-result-panel__value">{{ result.year }}</span>
+        </div>
+        <div class="analysis-result-panel__row" *ngIf="result.startDate">
+          <span class="analysis-result-panel__label">Start</span>
+          <span class="analysis-result-panel__value">{{ result.startDate }}</span>
+        </div>
+        <div class="analysis-result-panel__row" *ngIf="result.endDate">
+          <span class="analysis-result-panel__label">End</span>
+          <span class="analysis-result-panel__value">{{ result.endDate }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

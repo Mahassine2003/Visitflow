@@ -1,0 +1,6 @@
+@VisitFlowAPI_HostAddress = http://localhost:5038
+
+GET {{VisitFlowAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

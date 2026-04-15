@@ -1,0 +1,236 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+}
+
+.auth-page {
+  position: relative;
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 3rem);
+  max-width: 440px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Login: même espacement compact que Register (champs 12px, bouton +16px) */
+.auth-page--login {
+  padding-top: clamp(1.5rem, 3.2vw, 2.25rem);
+  padding-bottom: clamp(1.5rem, 3.2vw, 2.5rem);
+}
+
+.auth-page--login .auth-page__header {
+  margin-bottom: 1.25rem;
+}
+
+.auth-page--login .vf-float,
+.auth-page--login .vf-select {
+  margin-bottom: 12px;
+}
+
+.auth-page--login .auth-page__err {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.auth-page--login .auth-btn {
+  margin-top: 16px;
+}
+
+.auth-page__header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.auth-page__title {
+  font-family: var(--font-heading, 'Syne', system-ui, sans-serif);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-dark, #1a1f36);
+  margin: 0 0 0.5rem;
+  text-align: center;
+}
+
+.auth-page__lead {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-muted, #6b7280);
+  text-align: center;
+}
+
+.auth-page__form {
+  position: relative;
+}
+
+.auth-page__err {
+  font-size: 0.8125rem;
+  color: #dc2626;
+  margin: -0.65rem 0 0.85rem;
+}
+
+.auth-page__err--global {
+  margin-top: 0.25rem;
+}
+
+.auth-btn {
+  position: relative;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.95rem 1.25rem;
+  border: none;
+  border-radius: var(--radius, 12px);
+  font-family: var(--font-body, 'DM Sans', system-ui, sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary, #e87722) 0%,
+    #c45f12 100%
+  );
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(232, 119, 34, 0.35);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.auth-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+}
+
+.auth-btn:hover:not(:disabled)::after {
+  transform: translateX(120%);
+}
+
+.auth-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+  box-shadow: 0 12px 32px rgba(232, 119, 34, 0.42);
+}
+
+.auth-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.auth-btn:disabled {
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+.auth-btn__spinner {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: auth-spin 0.7s linear infinite;
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-btn::after {
+    display: none;
+  }
+
+  .auth-btn__spinner {
+    animation: none;
+    border-top-color: #fff;
+  }
+}
+
+.auth-page__footer {
+  margin-top: 1.75rem;
+  text-align: center;
+  font-size: 0.9375rem;
+  color: var(--color-muted, #6b7280);
+}
+
+.auth-page__footer a {
+  font-weight: 600;
+  color: var(--color-primary, #e87722);
+  text-decoration: none;
+}
+
+.auth-page__footer a:hover {
+  text-decoration: underline;
+}
+
+.auth-success {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(250, 251, 252, 0.92);
+  backdrop-filter: blur(6px);
+  border-radius: var(--radius, 12px);
+}
+
+.auth-success__ring {
+  position: absolute;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid rgba(232, 119, 34, 0.25);
+  animation: ring-pulse 1.2s ease infinite;
+}
+
+@keyframes ring-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-success__ring {
+    animation: none;
+  }
+}
+
+.auth-success__icon {
+  position: relative;
+  font-size: 2.5rem;
+  color: #16a34a;
+}
+
+.auth-success__text {
+  font-weight: 600;
+  color: var(--color-dark, #1a1f36);
+}

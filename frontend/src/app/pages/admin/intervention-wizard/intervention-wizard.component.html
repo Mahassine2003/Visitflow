@@ -1,0 +1,597 @@
+<div class="intervention-wizard page-enter">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">New Intervention</h1>
+      <p class="page-subtitle">Complete the guided workflow to create a compliant intervention request.</p>
+    </div>
+  </header>
+
+  <nav class="wizard-stepper" aria-label="Wizard steps">
+    <ng-container *ngFor="let label of wizardStepLabels; let i = index">
+      <button
+        type="button"
+        class="wizard-step"
+        [class.is-completed]="activeStep > i"
+        [class.is-active]="activeStep === i"
+        [class.is-upcoming]="activeStep < i"
+        (click)="goToStep(i)"
+      >
+        <span class="wizard-step__circle">
+          <span *ngIf="activeStep > i" class="pi pi-check"></span>
+          <span *ngIf="activeStep <= i">{{ i + 1 }}</span>
+        </span>
+        <span class="wizard-step__label">{{ label }}</span>
+      </button>
+      <span
+        *ngIf="i < wizardStepLabels.length - 1"
+        class="wizard-stepper__connector"
+        [class.is-filled]="activeStep > i"
+      ></span>
+    </ng-container>
+  </nav>
+
+  <section class="wizard-card">
+    <!-- Step 1 -->
+    <div *ngIf="activeStep === 0" class="wizard-step-content">
+      <!-- Plant must be chosen before the form -->
+      <div *ngIf="selectedPlantId == null" class="plant-gate">
+        <div class="section-header">
+          <span class="section-icon pi pi-map-marker"></span>
+          <h2 class="section-title">Plant (site)</h2>
+          <span class="section-line"></span>
+        </div>
+        <p class="plant-gate__hint">
+          Each intervention is linked to a plant. Select <strong>TFZ</strong>, <strong>TAC1</strong>, or
+          <strong>TAC2</strong>, then the form will appear.
+        </p>
+        <div class="plant-gate__grid">
+          <button
+            *ngFor="let pl of plants"
+            type="button"
+            class="plant-gate__card"
+            (click)="selectPlant(pl.id)"
+          >
+            <span class="plant-gate__card-title">{{ pl.name }}</span>
+            <span class="plant-gate__card-sub">Continue with this plant</span>
+          </button>
+        </div>
+        <p *ngIf="plants.length === 0" class="text-sm text-slate-500">Loading plants…</p>
+      </div>
+
+      <!-- `[hidden]` keeps the form in the DOM so Angular does not destroy/recreate it on plant
+           selection (that recreation left fields half-painted until another click). -->
+      <div class="wizard-after-plant" [hidden]="selectedPlantId == null">
+      <div class="plant-banner">
+        <span class="plant-banner__label">Plant: <strong>{{ selectedPlantLabel }}</strong></span>
+        <button type="button" class="plant-banner__change" (click)="clearPlantSelection()">Change</button>
+      </div>
+
+      <div class="section-header">
+        <span class="section-icon pi pi-building"></span>
+        <h2 class="section-title">Intervention Details</h2>
+        <span class="section-line"></span>
+        <div class="wizard-field-toolbar" (click)="$event.stopPropagation()">
+          <button type="button" class="wizard-field-toolbar-btn" title="Add field" (click)="openAddFieldDialog()">+</button>
+          <button
+            type="button"
+            class="wizard-field-toolbar-btn"
+            title="Edit"
+            [class.opacity-40]="toolbarEditDimmedStep0"
+            (click)="editSelectedField('general-toolbar')"
+          >✎</button>
+          <button
+            type="button"
+            class="wizard-field-toolbar-btn is-danger"
+            title="Delete"
+            [disabled]="toolbarDeleteBusy || toolbarEditDimmedStep0"
+            [class.opacity-40]="toolbarEditDimmedStep0"
+            (click)="deleteSelectedField()"
+          >−</button>
+        </div>
+      </div>
+
+      <div class="wizard-grid wizard-grid--two" [formGroup]="generalForm">
+        <div
+          class="wizard-field-selectable"
+          [class.wizard-field-selectable--active]="isCoreSelected('supplierId')"
+          (pointerdown)="selectCoreField('supplierId')"
+          (click)="selectCoreField('supplierId')"
+        >
+          <label class="wizard-label">Supplier <span class="wizard-required">*</span></label>
+          <select id="wizard-core-supplier" formControlName="supplierId" class="wizard-input wizard-select">
+            <option [ngValue]="null">Select supplier</option>
+            <option *ngFor="let s of suppliers" [ngValue]="s.id">{{ s.companyName }}</option>
+          </select>
+        </div>
+      </div>
+
+      <ng-container *ngIf="showCustomFieldsSection">
+      <div class="wizard-grid wizard-grid--one" [formGroup]="customFieldForm">
+        <ng-container *ngFor="let d of sortedFieldDefinitions; trackBy: trackByFieldKey">
+          <ng-container *ngIf="d.key === 'title'">
+            <ng-container [ngTemplateOutlet]="dynamicFieldTemplate" [ngTemplateOutletContext]="{ $implicit: d }"></ng-container>
+          </ng-container>
+        </ng-container>
+      </div>
+
+      <div class="wizard-grid wizard-grid--one" [formGroup]="customFieldForm">
+        <ng-container *ngFor="let d of sortedFieldDefinitions; trackBy: trackByFieldKey">
+          <ng-container *ngIf="d.key === 'description'">
+            <ng-container [ngTemplateOutlet]="dynamicFieldTemplate" [ngTemplateOutletContext]="{ $implicit: d }"></ng-container>
+          </ng-container>
+        </ng-container>
+      </div>
+
+      <div class="wizard-grid wizard-grid--two" [formGroup]="customFieldForm">
+        <ng-container *ngFor="let d of sortedFieldDefinitions; trackBy: trackByFieldKey">
+          <ng-container *ngIf="d.key === 'ppi' || d.key === 'typeOfWorkId'">
+            <ng-container [ngTemplateOutlet]="dynamicFieldTemplate" [ngTemplateOutletContext]="{ $implicit: d }"></ng-container>
+          </ng-container>
+        </ng-container>
+      </div>
+
+      <div class="wizard-grid wizard-grid--one" [formGroup]="customFieldForm">
+        <ng-container *ngFor="let d of sortedFieldDefinitions; trackBy: trackByFieldKey">
+          <ng-container *ngIf="d.key === 'zoneIds'">
+            <ng-container [ngTemplateOutlet]="dynamicFieldTemplate" [ngTemplateOutletContext]="{ $implicit: d }"></ng-container>
+          </ng-container>
+        </ng-container>
+      </div>
+      </ng-container>
+
+      <div class="schedule-fields">
+        <ng-container *ngIf="showCustomFieldsSection">
+        <div class="wizard-grid wizard-grid--two" [formGroup]="customFieldForm">
+          <ng-container *ngFor="let d of sortedFieldDefinitions; trackBy: trackByFieldKey">
+            <ng-container *ngIf="d.key === 'startTime' || d.key === 'endTime'">
+              <ng-container [ngTemplateOutlet]="dynamicFieldTemplate" [ngTemplateOutletContext]="{ $implicit: d }"></ng-container>
+            </ng-container>
+          </ng-container>
+        </div>
+        </ng-container>
+
+        <div class="wizard-grid wizard-grid--two" [formGroup]="generalForm">
+          <div
+            class="wizard-field-selectable wizard-date-field"
+            [class.wizard-field-selectable--active]="isCoreSelected('startDate')"
+            (pointerdown)="selectCoreField('startDate')"
+            (click)="selectCoreField('startDate')"
+          >
+            <label class="wizard-label">Start date <span class="wizard-required">*</span></label>
+            <input id="wizard-core-startdate" formControlName="startDate" type="date" class="wizard-input" />
+          </div>
+          <div
+            class="wizard-field-selectable wizard-date-field"
+            [class.wizard-field-selectable--active]="isCoreSelected('endDate')"
+            (pointerdown)="selectCoreField('endDate')"
+            (click)="selectCoreField('endDate')"
+          >
+            <label class="wizard-label">End date <span class="wizard-required">*</span></label>
+            <input id="wizard-core-enddate" formControlName="endDate" type="date" class="wizard-input" />
+          </div>
+        </div>
+
+        <div
+          id="wizard-core-personnel"
+          class="wizard-field-selectable"
+          [class.wizard-field-selectable--active]="isCoreSelected('personnel')"
+          (pointerdown)="selectCoreField('personnel')"
+          (click)="selectCoreField('personnel')"
+        >
+          <label class="wizard-label">Personnel by name</label>
+          <div class="personnel-box" *ngIf="personnelList.length > 0; else noPersonnelTpl">
+            <label *ngFor="let p of personnelList" class="personnel-item">
+              <input
+                type="checkbox"
+                [checked]="isPersonnelSelected(p.id)"
+                (change)="togglePersonnel(p.id, $any($event.target).checked)"
+              />
+              <span>{{ p.fullName }}</span>
+            </label>
+          </div>
+          <ng-template #noPersonnelTpl>
+            <div class="empty-personnel">
+              <span class="pi pi-user-minus"></span>
+              <p>No personal records available for this supplier.</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <ng-container *ngIf="showCustomFieldsSection">
+      <div class="wizard-grid wizard-grid--one" [formGroup]="customFieldForm">
+        <ng-container *ngFor="let d of sortedFieldDefinitions; trackBy: trackByFieldKey">
+          <ng-container *ngIf="!['plant','title','description','ppi','typeOfWorkId','zoneIds','startTime','endTime'].includes(d.key)">
+            <ng-container [ngTemplateOutlet]="dynamicFieldTemplate" [ngTemplateOutletContext]="{ $implicit: d }"></ng-container>
+          </ng-container>
+        </ng-container>
+      </div>
+      </ng-container>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div *ngIf="activeStep === 1" class="wizard-step-content">
+      <div class="section-header">
+        <span class="section-icon pi pi-bolt"></span>
+        <h2 class="section-title">Fire permit</h2>
+        <span class="section-line"></span>
+        <div class="wizard-field-toolbar" (click)="$event.stopPropagation()">
+          <button type="button" class="wizard-field-toolbar-btn" [class.opacity-40]="toolbarPermitActionsDimmed" (click)="editSelectedField('fire-toolbar')">✎</button>
+          <button
+            type="button"
+            class="wizard-field-toolbar-btn is-danger"
+            [disabled]="toolbarDeleteBusy || toolbarPermitActionsDimmed"
+            [class.opacity-40]="toolbarPermitActionsDimmed"
+            (click)="deleteSelectedField()"
+          >−</button>
+        </div>
+      </div>
+      <form [formGroup]="fireForm">
+        <div
+          class="wizard-field-selectable"
+          [class.wizard-field-selectable--active]="isPermitSelected('fire')"
+          (pointerdown)="selectPermitField('fire')"
+          (click)="selectPermitField('fire')"
+        >
+          <label class="wizard-label">Fire permit details</label>
+          <textarea id="wizard-fire-details" formControlName="details" rows="8" class="wizard-input wizard-textarea" (focus)="selectPermitField('fire')"></textarea>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 3 -->
+    <div *ngIf="activeStep === 2" class="wizard-step-content">
+      <div class="section-header">
+        <span class="section-icon pi pi-arrow-up-right"></span>
+        <h2 class="section-title">Height permit</h2>
+        <span class="section-line"></span>
+        <div class="wizard-field-toolbar" (click)="$event.stopPropagation()">
+          <button type="button" class="wizard-field-toolbar-btn" [class.opacity-40]="toolbarPermitActionsDimmed" (click)="editSelectedField('height-toolbar')">✎</button>
+          <button
+            type="button"
+            class="wizard-field-toolbar-btn is-danger"
+            [disabled]="toolbarDeleteBusy || toolbarPermitActionsDimmed"
+            [class.opacity-40]="toolbarPermitActionsDimmed"
+            (click)="deleteSelectedField()"
+          >−</button>
+        </div>
+      </div>
+      <form [formGroup]="heightForm">
+        <div
+          class="wizard-field-selectable"
+          [class.wizard-field-selectable--active]="isPermitSelected('height')"
+          (pointerdown)="selectPermitField('height')"
+          (click)="selectPermitField('height')"
+        >
+          <label class="wizard-label">Height permit details</label>
+          <textarea id="wizard-height-details" formControlName="details" rows="8" class="wizard-input wizard-textarea" (focus)="selectPermitField('height')"></textarea>
+        </div>
+      </form>
+    </div>
+
+    <!-- Step 4 -->
+    <div *ngIf="activeStep === 3" class="wizard-step-content">
+      <div class="section-header">
+        <span class="section-icon pi pi-check-circle"></span>
+        <h2 class="section-title">Validation</h2>
+        <span class="section-line"></span>
+      </div>
+      <div class="validation-grid">
+        <div class="validation-item">
+          <span class="validation-label">Plant</span>
+          <span class="validation-value">{{ selectedPlantLabel }}</span>
+        </div>
+        <div class="validation-item">
+          <span class="validation-label">Supplier</span>
+          <span class="validation-value">{{ supplierLabel }}</span>
+        </div>
+        <ng-container *ngFor="let row of validationCustomFieldRows">
+          <div class="validation-item">
+            <span class="validation-label">{{ row.label }}</span>
+            <span class="validation-value">{{ row.value }}</span>
+          </div>
+        </ng-container>
+        <div class="validation-item">
+          <span class="validation-label">Personnel</span>
+          <span class="validation-value">{{ selectedPersonnelNamesDisplay }}</span>
+        </div>
+        <div class="validation-item">
+          <span class="validation-label">Fire permit</span>
+          <span class="validation-value">{{ fireForm.value.details?.trim() || '—' }}</span>
+        </div>
+        <div class="validation-item">
+          <span class="validation-label">Height permit</span>
+          <span class="validation-value">{{ heightForm.value.details?.trim() || '—' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <footer class="wizard-footer">
+      <button type="button" class="wizard-btn wizard-btn--secondary" [disabled]="activeStep === 0" (click)="prev()">
+        <span class="pi pi-arrow-left"></span>
+        Previous
+      </button>
+
+      <div class="wizard-footer__center">
+        <span class="wizard-footer__meta">Step {{ activeStep + 1 }} of {{ wizardStepLabels.length }}</span>
+        <div class="wizard-dots">
+          <span *ngFor="let label of wizardStepLabels; let i = index" class="wizard-dot" [class.is-active]="activeStep === i"></span>
+        </div>
+      </div>
+
+      <button
+        *ngIf="activeStep < maxStepIndex"
+        type="button"
+        class="wizard-btn wizard-btn--primary"
+        [disabled]="activeStep === 0 && selectedPlantId == null"
+        (click)="next()"
+      >
+        Next
+        <span class="pi pi-arrow-right"></span>
+      </button>
+      <button *ngIf="activeStep === maxStepIndex" type="button" class="wizard-btn wizard-btn--primary" (click)="submit()">
+        Create intervention
+        <span class="pi pi-check"></span>
+      </button>
+    </footer>
+  </section>
+
+  <ng-template #dynamicFieldTemplate let-d>
+    <div
+      class="wizard-field-selectable"
+      [class.wizard-field-selectable--active]="isCustomFieldSelected(d)"
+      (pointerdown)="selectField(d)"
+      (click)="selectField(d)"
+    >
+      <label class="wizard-label">
+        {{ d.label }}
+        <span *ngIf="d.isRequired" class="wizard-required">*</span>
+      </label>
+      <ng-container [ngSwitch]="fieldWidget(d)">
+        <select
+          *ngSwitchCase="'zones'"
+          [id]="'wizard-field-' + d.key"
+          [formControlName]="d.key"
+          class="wizard-input wizard-multiselect"
+          multiple
+          (focus)="selectField(d)"
+        >
+          <option *ngFor="let z of zones" [ngValue]="z.id">{{ z.name }}</option>
+        </select>
+        <select
+          *ngSwitchCase="'workType'"
+          [id]="'wizard-field-' + d.key"
+          [formControlName]="d.key"
+          class="wizard-input wizard-select"
+          (focus)="selectField(d)"
+        >
+          <option [ngValue]="null">Select work type</option>
+          <option *ngFor="let t of typeOfWorks" [ngValue]="t.id">{{ t.name }}</option>
+        </select>
+        <textarea
+          *ngSwitchCase="'textarea'"
+          [id]="'wizard-field-' + d.key"
+          [formControlName]="d.key"
+          rows="4"
+          class="wizard-input wizard-textarea"
+          (focus)="selectField(d)"
+        ></textarea>
+        <select
+          *ngSwitchCase="'select'"
+          [formControlName]="d.key"
+          class="wizard-input wizard-select"
+          (focus)="selectField(d)"
+        >
+          <option [ngValue]="''">Choose</option>
+          <option *ngFor="let opt of getFieldOptions(d)" [ngValue]="opt">{{ opt }}</option>
+        </select>
+        <div *ngSwitchCase="'input'" class="wizard-icon-input" [class.is-time]="inputType(d) === 'time'" [class.is-date]="inputType(d) === 'date'">
+          <input
+            [formControlName]="d.key"
+            [type]="inputType(d)"
+            class="wizard-input"
+            [attr.step]="d.fieldType == 1 ? 'any' : null"
+            (focus)="selectField(d)"
+          />
+        </div>
+        <div *ngSwitchDefault class="wizard-icon-input" [class.is-time]="inputType(d) === 'time'" [class.is-date]="inputType(d) === 'date'">
+          <input
+            [formControlName]="d.key"
+            [type]="inputType(d)"
+            class="wizard-input"
+            [attr.step]="d.fieldType == 1 ? 'any' : null"
+            (focus)="selectField(d)"
+          />
+        </div>
+      </ng-container>
+    </div>
+  </ng-template>
+
+  <p-dialog
+    [header]="
+      fieldDialogMode === 'add' && fieldAddWizardStep === 'choice'
+        ? 'New field — choose type'
+        : fieldDialogMode === 'add'
+          ? 'New field'
+          : 'Edit field'
+    "
+    [(visible)]="fieldDialogVisible"
+    [modal]="true"
+    appendTo="body"
+    [baseZIndex]="12000"
+    [style]="{ width: 'min(520px, 95vw)' }"
+    (onHide)="closeFieldDialog()"
+  >
+    <div class="space-y-4">
+      <!-- Step 1: two modes (add only) -->
+      <div
+        *ngIf="fieldDialogMode === 'add' && fieldAddWizardStep === 'choice'"
+        class="space-y-3"
+      >
+        <p class="text-sm text-slate-600">
+          Choose how the field should be created, then continue.
+        </p>
+        <label class="flex items-start gap-3 rounded-lg border border-slate-200 p-3 cursor-pointer hover:bg-slate-50">
+          <input
+            type="radio"
+            name="addFieldKind"
+            class="mt-1"
+            [value]="'custom'"
+            [(ngModel)]="addFieldKind"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          <span>
+            <span class="block text-sm font-medium text-slate-800">New field (definition in database)</span>
+            <span class="block text-xs text-slate-500 mt-0.5">
+              Creates a row in the definitions table; values are stored with each intervention.
+            </span>
+          </span>
+        </label>
+        <label class="flex items-start gap-3 rounded-lg border border-slate-200 p-3 cursor-pointer hover:bg-slate-50">
+          <input
+            type="radio"
+            name="addFieldKind"
+            class="mt-1"
+            [value]="'database'"
+            [(ngModel)]="addFieldKind"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          <span>
+            <span class="block text-sm font-medium text-slate-800">Database-linked field</span>
+            <span class="block text-xs text-slate-500 mt-0.5">
+              Pick an existing table and column; the dropdown will list distinct values from that column.
+            </span>
+          </span>
+        </label>
+        <div class="flex gap-2 justify-end pt-2">
+          <button type="button" class="btn-outline" (click)="closeFieldDialog()">Cancel</button>
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="addFieldKind !== 'custom' && addFieldKind !== 'database'"
+            (click)="confirmAddFieldChoice()"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom field form -->
+      <ng-container *ngIf="showWizardCustomFieldForm">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Label shown on the form</label>
+          <input
+            [(ngModel)]="fieldForm.label"
+            [ngModelOptions]="{ standalone: true }"
+            class="input w-full"
+            autocomplete="off"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Field type</label>
+          <select [(ngModel)]="fieldForm.fieldType" [ngModelOptions]="{ standalone: true }" class="input w-full">
+            <option *ngFor="let o of fieldTypeOptions" [ngValue]="o.value">{{ o.label }}</option>
+          </select>
+        </div>
+        <div *ngIf="isFieldFormSelectType">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Dropdown options (one per line)</label>
+          <textarea
+            [(ngModel)]="fieldForm.fieldOptionsLines"
+            [ngModelOptions]="{ standalone: true }"
+            rows="4"
+            class="input w-full min-h-[88px]"
+            placeholder="Option A&#10;Option B&#10;Option C"
+          ></textarea>
+          <p *ngIf="fieldDialogSelectionInvalid" class="mt-1 text-xs text-red-600">
+            Add at least one option for a dropdown field.
+          </p>
+        </div>
+      </ng-container>
+
+      <!-- Database-linked field form -->
+      <ng-container *ngIf="showWizardDatabaseFieldForm">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Display label</label>
+          <input
+            [(ngModel)]="fieldForm.label"
+            [ngModelOptions]="{ standalone: true }"
+            class="input w-full"
+            autocomplete="off"
+          />
+        </div>
+        <p class="text-xs text-slate-500">
+          Type: dropdown — options are loaded from the selected column (max. 500 distinct values).
+        </p>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Table</label>
+          <select
+            class="input w-full"
+            [(ngModel)]="bindingTableKey"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onBindingTableKeyChange($event)"
+          >
+            <option value="">— Select a table —</option>
+            <option *ngFor="let t of schemaTables" [value]="tableRowKey(t)">
+              {{ t.schemaName }}.{{ t.tableName }}
+            </option>
+          </select>
+          <p *ngIf="schemaTablesLoading" class="text-xs text-slate-500 mt-1">Loading tables…</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Column</label>
+          <select
+            class="input w-full"
+            [(ngModel)]="bindingColumn"
+            [ngModelOptions]="{ standalone: true }"
+            [disabled]="!bindingTableKey || schemaColumnsLoading"
+          >
+            <option value="">— Select a column —</option>
+            <option *ngFor="let c of schemaColumns" [value]="c.columnName">
+              {{ c.columnName }} ({{ c.dataType }})
+            </option>
+          </select>
+          <p *ngIf="schemaColumnsLoading" class="text-xs text-slate-500 mt-1">Loading columns…</p>
+        </div>
+      </ng-container>
+
+      <!-- Shared options (after mode choice) -->
+      <ng-container *ngIf="fieldDialogMode === 'edit' || fieldAddWizardStep === 'form'">
+        <div *ngIf="showWizardCustomFieldForm || showWizardDatabaseFieldForm" class="space-y-3 pt-1 border-t border-slate-100">
+          <div>
+            <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                [(ngModel)]="fieldForm.isRequired"
+                [ngModelOptions]="{ standalone: true }"
+                class="h-4 w-4 rounded border-slate-300"
+              />
+              Required
+            </label>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Display order</label>
+            <input
+              [(ngModel)]="fieldForm.sortOrder"
+              [ngModelOptions]="{ standalone: true }"
+              type="number"
+              class="input w-full"
+              min="0"
+            />
+          </div>
+        </div>
+        <div class="flex gap-2 justify-end pt-2">
+          <button type="button" class="btn-outline" (click)="closeFieldDialog()">Cancel</button>
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="fieldDialogSaveDisabled"
+            (click)="saveFieldDialog()"
+          >
+            {{ fieldDialogMode === 'add' ? 'Create' : 'Save' }}
+          </button>
+        </div>
+      </ng-container>
+    </div>
+  </p-dialog>
+</div>

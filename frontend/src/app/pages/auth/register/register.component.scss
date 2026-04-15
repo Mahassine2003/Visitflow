@@ -1,0 +1,110 @@
+@import '../login/login.component.scss';
+
+.auth-page--register {
+  max-width: 480px;
+  padding-top: clamp(1.5rem, 3.2vw, 2.25rem);
+  padding-bottom: clamp(1.5rem, 3.2vw, 2.5rem);
+  justify-content: center;
+}
+
+.auth-page--register .auth-page__header {
+  margin-bottom: 1.25rem;
+}
+
+.auth-page__scroll {
+  /* Default: no scrolling needed on 1080p after compaction */
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  margin-right: 0;
+}
+
+.auth-page__scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-page__scroll::-webkit-scrollbar-thumb {
+  background: rgba(232, 119, 34, 0.35);
+  border-radius: 3px;
+}
+
+.auth-page--register .vf-float,
+.auth-page--register .vf-select {
+  margin-bottom: 12px;
+}
+
+.auth-page--register .auth-page__err,
+.auth-page--register .auth-page__ok {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.auth-page--register .auth-btn {
+  margin-top: 16px;
+}
+
+.pw-strength {
+  margin: -0.35rem 0 0.5rem;
+}
+
+.pw-strength__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-muted, #6b7280);
+  margin-bottom: 0.35rem;
+}
+
+.pw-strength__label {
+  font-weight: 600;
+}
+
+.pw-strength__track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(26, 31, 54, 0.08);
+  overflow: hidden;
+}
+
+.pw-strength__bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.35s ease;
+}
+
+.pw-strength.is-weak .pw-strength__bar {
+  background: linear-gradient(90deg, #dc2626, #f97316);
+}
+
+.pw-strength.is-fair .pw-strength__bar {
+  background: linear-gradient(90deg, #eab308, #e87722);
+}
+
+.pw-strength.is-strong .pw-strength__bar {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.auth-page__ok {
+  font-size: 0.8125rem;
+  color: #16a34a;
+  margin: -0.5rem 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pw-strength__bar {
+    transition: none;
+  }
+}
+
+/* Keep an escape hatch for smaller viewports */
+@media (max-height: 820px), (max-width: 420px) {
+  .auth-page__scroll {
+    max-height: min(70vh, 620px);
+    overflow-y: auto;
+    padding-right: 0.35rem;
+    margin-right: -0.35rem;
+  }
+}

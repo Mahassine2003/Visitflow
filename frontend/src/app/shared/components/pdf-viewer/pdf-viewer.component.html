@@ -1,0 +1,22 @@
+<div class="flex flex-col gap-2">
+  <div class="flex items-center justify-between">
+    <h2 class="text-sm font-medium text-slate-700">
+      Intervention PDF #{{ interventionId }}
+    </h2>
+    <button class="btn-outline" type="button" (click)="download()">
+      Download
+    </button>
+  </div>
+
+  <div class="border border-slate-200 rounded-lg overflow-hidden h-[480px] bg-white">
+    <ngx-extended-pdf-viewer
+      *ngIf="pdfSrc"
+      [src]="pdfSrc"
+      useBrowserLocale="true"
+      height="100%"
+      [showSidebarButton]="true"
+      [textLayer]="true"
+    ></ngx-extended-pdf-viewer>
+    <div *ngIf="!pdfSrc && !loading" class="p-4 text-sm text-slate-500">—</div>
+  </div>
+</div>

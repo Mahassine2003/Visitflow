@@ -1,0 +1,39 @@
+<div class="page-enter space-y-4">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Interventions</h1>
+      <p class="page-subtitle">Track scheduled visits and download intervention PDFs.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-plus" label="New intervention" class="p-button-primary" (click)="createNew()"></button>
+  </div>
+  <div class="card table-scroll">
+  <p-table [value]="interventions" [loading]="loading" [paginator]="true" [rows]="10" dataKey="id">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Plant</th>
+          <th>Title</th>
+          <th>Visit</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Status</th>
+          <th>HSE</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-i>
+        <tr>
+          <td class="text-sm">{{ i.plantName || '—' }}</td>
+          <td>{{ i.title || '—' }}</td>
+          <td class="text-xs text-slate-600">{{ i.visitKey || '—' }}</td>
+          <td>{{ i.startDate }} {{ i.startTime }}</td>
+          <td>{{ i.endDate }} {{ i.endTime }}</td>
+          <td>{{ i.status }}</td>
+          <td>{{ i.hseApprovalStatus }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-file-pdf" class="p-button-text p-button-sm" label="PDF" (click)="openPdf(i.id)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

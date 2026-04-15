@@ -1,0 +1,328 @@
+<div class="suppliers-page page-enter">
+  <section class="suppliers-header">
+    <div>
+      <h1>Suppliers</h1>
+      <p>Manage partner records, company documents, and linked personnel.</p>
+    </div>
+    <button type="button" class="new-supplier-btn" (click)="openCreate()">
+      <span class="new-supplier-btn__icon">+</span>
+      <span>New Supplier</span>
+    </button>
+  </section>
+
+  <section *ngIf="showCreate" class="card create-card" @fadeInUp>
+    <h2 class="create-card__title">New supplier</h2>
+    <form [formGroup]="form" (ngSubmit)="submitCreate()" class="create-card__form">
+      <div class="form-field">
+        <label><span class="required-mark">*</span>Company name</label>
+        <input formControlName="companyName" class="input" />
+      </div>
+      <div class="form-field">
+        <label><span class="required-mark">*</span>ICE</label>
+        <input formControlName="ice" class="input" />
+      </div>
+      <div class="form-field form-field--full">
+        <label>File</label>
+        <app-insurance-upload [label]="'File'" (resultChange)="insuranceResult = $event"></app-insurance-upload>
+      </div>
+      <div class="form-field">
+        <label><span class="required-mark">*</span>Email</label>
+        <input formControlName="email" type="email" class="input" />
+      </div>
+      <div class="form-field">
+        <label><span class="required-mark">*</span>Phone</label>
+        <input formControlName="phone" class="input" />
+      </div>
+      <div class="form-field form-field--full">
+        <label>Address</label>
+        <input formControlName="address" class="input" />
+      </div>
+      <p *ngIf="createError" class="text-sm text-red-600">{{ createError }}</p>
+      <div class="create-card__actions">
+        <button type="submit" class="btn-primary" [disabled]="createLoading">
+          {{ createLoading ? 'Creating…' : 'Create supplier' }}
+        </button>
+        <button type="button" class="btn-secondary" (click)="cancelCreate()">Cancel</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="toolbar">
+    <div class="toolbar-search">
+      <span class="pi pi-search"></span>
+      <input
+        type="text"
+        [value]="filterText"
+        (input)="filterText = $any($event.target).value"
+        placeholder="Search suppliers..."
+      />
+    </div>
+    <span class="toolbar-count">{{ filteredSuppliers.length }} suppliers</span>
+  </section>
+
+  <section class="suppliers-card">
+    <p-table [value]="filteredSuppliers" [loading]="loading" [paginator]="true" [rows]="10" dataKey="id">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="companyName">Company name <p-sortIcon field="companyName"></p-sortIcon></th>
+          <th>ICE</th>
+          <th pSortableColumn="email">Email <p-sortIcon field="email"></p-sortIcon></th>
+          <th>Phone</th>
+          <th>Address</th>
+          <th class="actions-col">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-supplier let-i="rowIndex">
+        <tr [style.--row-index]="i">
+          <td>
+            <div class="company-cell">
+              <span class="company-avatar">{{ (supplier.companyName || 'S').charAt(0).toUpperCase() }}</span>
+              <span class="company-name">{{ supplier.companyName }}</span>
+            </div>
+          </td>
+          <td><span class="ice-chip">{{ supplier.ice || '—' }}</span></td>
+          <td class="email-cell">{{ supplier.email }}</td>
+          <td class="phone-cell">{{ supplier.phone || '—' }}</td>
+          <td class="address-cell" [title]="supplier.address || ''">{{ supplier.address || '—' }}</td>
+          <td>
+            <div class="action-group">
+              <button type="button" class="action-btn view-btn" data-tooltip="View details" (click)="openDetail(supplier.id)">
+                <span class="pi pi-eye"></span>
+              </button>
+              <button
+                *ngIf="canManageSuppliers()"
+                type="button"
+                class="action-btn edit-btn"
+                data-tooltip="Edit supplier"
+                (click)="openEdit(supplier)"
+              >
+                <span class="pi pi-pencil"></span>
+              </button>
+              <button
+                *ngIf="canManageSuppliers()"
+                type="button"
+                class="action-btn delete-btn"
+                data-tooltip="Delete supplier"
+                (click)="openDeleteModal(supplier)"
+              >
+                <span class="pi pi-trash"></span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <div class="empty-state__icon"><span class="pi pi-briefcase"></span></div>
+              <h3>No suppliers yet</h3>
+              <p>Add your first supplier to get started.</p>
+              <button type="button" class="btn-primary" (click)="openCreate()">New supplier</button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section *ngIf="selectedId" class="supplier-detail-panel" @fadeInUp>
+    <div class="detail-banner">
+      <div class="detail-banner__actions">
+        <button *ngIf="supplier && canManageSuppliers()" type="button" class="detail-banner__btn" (click)="openEdit(supplier)">
+          <span class="pi pi-pencil"></span> Edit
+        </button>
+        <button *ngIf="supplier && canManageSuppliers()" type="button" class="detail-banner__btn is-danger" (click)="openDeleteModal(supplier)">
+          <span class="pi pi-trash"></span> Delete
+        </button>
+        <button type="button" class="detail-banner__close" (click)="closeDetail()">
+          <span class="pi pi-times"></span>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="detailLoading" class="detail-loading">Loading…</div>
+    <ng-container *ngIf="!detailLoading && supplier">
+      <div class="detail-identity">
+        <div class="detail-avatar">{{ (supplier.companyName || 'S').charAt(0).toUpperCase() }}</div>
+        <div class="detail-title-wrap">
+          <h3>{{ supplier.companyName }}</h3>
+          <span class="status-pill" [class.is-empty]="!supplier.status">{{ supplier.status || 'No status' }}</span>
+        </div>
+      </div>
+
+      <div class="detail-info-grid">
+        <div class="info-cell">
+          <span class="info-label">ICE</span>
+          <span class="info-value">{{ supplier.ice || '—' }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-label">Email</span>
+          <span class="info-value">{{ supplier.email || '—' }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-label">Phone</span>
+          <span class="info-value">{{ supplier.phone || '—' }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-label">Address</span>
+          <span class="info-value">{{ supplier.address || '—' }}</span>
+        </div>
+        <div class="info-cell">
+          <span class="info-label">Status</span>
+          <span class="info-value">{{ supplier.status || '—' }}</span>
+        </div>
+      </div>
+
+      <div class="detail-docs">
+        <div class="detail-section-head">
+          <h4><span class="pi pi-file"></span> Documents</h4>
+          <span class="count-pill">{{ companyDocs.length }}</span>
+        </div>
+        <div *ngIf="companyDocsLoading" class="text-sm text-slate-500">Loading documents…</div>
+        <div *ngIf="!companyDocsLoading && companyDocs.length === 0" class="text-sm text-slate-500">No company documents.</div>
+        <div *ngFor="let d of companyDocs" class="doc-item">
+          <div class="doc-left">
+            <span class="doc-icon pi pi-file-pdf"></span>
+            <div class="doc-meta">
+              <div class="doc-name">{{ d.documentType || 'Document' }}</div>
+              <div class="doc-path">{{ d.filePath }}</div>
+            </div>
+          </div>
+          <button type="button" class="doc-view-btn" (click)="openCompanyDocument(d)">
+            <span class="pi pi-external-link"></span>
+            View
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-personal">
+        <div class="detail-section-head">
+          <h4><span class="pi pi-users"></span> Personal</h4>
+          <button type="button" class="add-personal-btn" (click)="addPersonnel()">
+            <span class="pi pi-plus"></span>
+            Add personal
+          </button>
+        </div>
+
+        <p-table [value]="personnel" [loading]="personnelLoading" [paginator]="true" [rows]="10" dataKey="id">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Name</th>
+              <th>CIN</th>
+              <th>Activity</th>
+              <th>Blacklisted</th>
+              <th>Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-p>
+            <tr>
+              <td>
+                <div class="personal-name">
+                  <span class="personal-avatar">{{ (p.fullName || 'P').charAt(0).toUpperCase() }}</span>
+                  <span>{{ p.fullName }}</span>
+                </div>
+              </td>
+              <td><span class="cin-chip">{{ p.cin }}</span></td>
+              <td><span class="activity-badge">{{ p.fieldOfActivity }}</span></td>
+              <td>
+                <span class="blacklist-pill" [class.is-yes]="p.isBlacklisted" [class.is-no]="!p.isBlacklisted">
+                  {{ p.isBlacklisted ? 'Yes' : 'No' }}
+                </span>
+              </td>
+              <td>
+                <button *ngIf="!p.isBlacklisted" type="button" class="blacklist-btn" (click)="blacklist(p.id, true)">
+                  <span class="pi pi-ban"></span>
+                  Blacklist
+                </button>
+                <button *ngIf="p.isBlacklisted" type="button" class="blacklist-btn" (click)="blacklist(p.id, false)">
+                  <span class="pi pi-check"></span>
+                  Remove
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </ng-container>
+  </section>
+
+  <p-dialog
+    [(visible)]="editVisible"
+    [modal]="true"
+    [style]="{ width: 'min(520px, 95vw)' }"
+    [draggable]="false"
+    [dismissableMask]="true"
+    (onHide)="closeEdit()"
+  >
+    <ng-template pTemplate="header">
+      <div class="edit-modal-head">
+        <div class="edit-modal-avatar">{{ (editForm.value.companyName || supplier?.companyName || 'S').charAt(0).toUpperCase() }}</div>
+        <div>
+          <h3>Edit Supplier</h3>
+          <p>{{ editForm.value.companyName || supplier?.companyName || 'Supplier' }}</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <form [formGroup]="editForm" (ngSubmit)="submitEdit()" class="edit-modal-form">
+      <div class="form-field">
+        <label><span class="required-mark">*</span>Company name</label>
+        <input formControlName="companyName" class="input" />
+      </div>
+      <div class="edit-modal-grid">
+        <div class="form-field">
+          <label><span class="required-mark">*</span>ICE</label>
+          <input formControlName="ice" class="input" />
+        </div>
+        <div class="form-field">
+          <label><span class="required-mark">*</span>Phone</label>
+          <input formControlName="phone" class="input" />
+        </div>
+      </div>
+      <div class="form-field">
+        <label><span class="required-mark">*</span>Email</label>
+        <input formControlName="email" type="email" class="input" />
+      </div>
+      <div class="form-field">
+        <label>Address</label>
+        <input formControlName="address" class="input" />
+      </div>
+      <p *ngIf="editError" class="text-sm text-red-600">{{ editError }}</p>
+      <div class="edit-modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeEdit()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="editLoading">
+          <span *ngIf="editLoading" class="pi pi-spin pi-spinner"></span>
+          {{ editLoading ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <div *ngIf="showDeleteModal" class="delete-modal-overlay" @backdropAnim (click)="closeDeleteModal()">
+    <div class="delete-modal-box" @deleteModalAnim (click)="$event.stopPropagation()">
+      <div class="delete-modal-top">
+        <div class="danger-icon">
+          <span class="pi pi-trash"></span>
+        </div>
+        <h3>Delete Supplier?</h3>
+        <span class="delete-name">{{ selectedSupplierToDelete?.companyName }}</span>
+        <p>This action is permanent and cannot be undone. All associated data will be permanently lost.</p>
+        <div class="delete-pills">
+          <span>📄 Documents lost</span>
+          <span>👥 Personnel unlinked</span>
+          <span>⚠️ Irreversible</span>
+        </div>
+      </div>
+      <div class="delete-modal-footer">
+        <button type="button" class="delete-confirm-btn" [disabled]="isDeleting" (click)="confirmDelete()">
+          <span *ngIf="isDeleting" class="pi pi-spin pi-spinner"></span>
+          {{ isDeleting ? 'Deleting…' : 'Yes, delete permanently' }}
+        </button>
+        <button type="button" class="delete-cancel-btn" [disabled]="isDeleting" (click)="closeDeleteModal()">
+          Cancel, keep supplier
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

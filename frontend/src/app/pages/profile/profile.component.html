@@ -1,0 +1,362 @@
+<div *ngIf="profileLoading() && !profile()" class="profile-page profile-page--boot" @profileHeroEnter>
+  <div class="profile-page__boot-inner">
+    <span class="pi pi-spin pi-spinner profile-page__boot-icon" aria-hidden="true"></span>
+    <p>Loading your profile…</p>
+  </div>
+</div>
+
+<div *ngIf="loadError() && !profile()" class="profile-page profile-page--err-only">
+  <p class="profile-page__load-err">{{ loadError() }}</p>
+</div>
+
+<div *ngIf="profile()" class="profile-page page-enter" @profilePageEnter>
+  <input
+    #avatarFileInput
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    class="profile-page__hidden-input"
+    (change)="onAvatarFileSelected($event)"
+  />
+
+  <header class="profile-page__hero" @profileHeroEnter>
+    <h1 class="profile-page__title">My Profile</h1>
+    <p class="profile-page__lead">Manage your account, security, and preferences.</p>
+  </header>
+
+  <div class="profile-page__grid">
+    <!-- LEFT: identity card -->
+    <aside class="profile-id">
+      <div class="profile-id__card">
+        <div class="profile-id__avatar-wrap">
+          <div class="profile-id__ring">
+            <button
+              type="button"
+              class="profile-id__avatar-btn"
+              (click)="openProfilePhotoTab()"
+              [disabled]="avatarSaving()"
+              aria-label="Open profile photo — drag and drop or choose a file"
+            >
+              <ng-container *ngIf="displayAvatarSrc(); else initialsBlock">
+                <img [src]="displayAvatarSrc()!" alt="" class="profile-id__avatar-img" />
+              </ng-container>
+              <ng-template #initialsBlock>
+                <div class="profile-id__initials">{{ initials() }}</div>
+              </ng-template>
+              <div class="profile-id__avatar-overlay">
+                <span class="pi pi-camera profile-id__camera"></span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <h2 class="profile-id__name">{{ profile()?.fullName || '—' }}</h2>
+        <span class="profile-id__badge" [ngClass]="roleBadgeClass()">{{ profile()?.role || '—' }}</span>
+        <p class="profile-id__email">{{ profile()?.email || '—' }}</p>
+        <p class="profile-id__since">Member since {{ memberSinceLabel() }}</p>
+      </div>
+    </aside>
+
+    <!-- RIGHT: tabs -->
+    <section class="profile-panel">
+      <div class="profile-tabs">
+        <div class="profile-tabs__nav" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            class="profile-tabs__btn"
+            [class.profile-tabs__btn--active]="activeTab() === 0"
+            [attr.aria-selected]="activeTab() === 0"
+            (click)="setTab(0)"
+          >
+            Personal Information
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="profile-tabs__btn"
+            [class.profile-tabs__btn--active]="activeTab() === 1"
+            [attr.aria-selected]="activeTab() === 1"
+            (click)="setTab(1)"
+          >
+            Profile Photo
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="profile-tabs__btn"
+            [class.profile-tabs__btn--active]="activeTab() === 2"
+            [attr.aria-selected]="activeTab() === 2"
+            (click)="setTab(2)"
+          >
+            Security
+          </button>
+          <button
+            type="button"
+            role="tab"
+            class="profile-tabs__btn"
+            [class.profile-tabs__btn--active]="activeTab() === 3"
+            [attr.aria-selected]="activeTab() === 3"
+            (click)="setTab(3)"
+          >
+            Danger Zone
+          </button>
+          <div
+            class="profile-tabs__indicator"
+            [style.--vf-tab]="activeTab()"
+          ></div>
+        </div>
+
+        <div class="profile-tabs__panels">
+          <!-- TAB 1 -->
+          <div class="profile-tab-panel" *ngIf="activeTab() === 0" @tabEnter role="tabpanel">
+            <form [formGroup]="personalForm" class="profile-form">
+              <div class="profile-field" [class.profile-field--edit]="isEditingPersonal()">
+                <div class="profile-field__head">
+                  <label class="profile-field__label" for="pf-fullname">Full name</label>
+                  <button
+                    type="button"
+                    class="profile-field__pencil"
+                    (click)="toggleEditPersonal()"
+                    [attr.aria-label]="isEditingPersonal() ? 'Stop editing' : 'Edit full name'"
+                  >
+                    <span class="pi pi-pencil"></span>
+                  </button>
+                </div>
+                <input
+                  id="pf-fullname"
+                  type="text"
+                  class="profile-input"
+                  formControlName="fullName"
+                  [readonly]="!isEditingPersonal()"
+                />
+              </div>
+
+              <div class="profile-field" [class.profile-field--edit]="isEditingPersonal()">
+                <div class="profile-field__head">
+                  <label class="profile-field__label" for="pf-email">Email</label>
+                  <button
+                    type="button"
+                    class="profile-field__pencil"
+                    (click)="toggleEditPersonal()"
+                    [attr.aria-label]="isEditingPersonal() ? 'Stop editing' : 'Edit email'"
+                  >
+                    <span class="pi pi-pencil"></span>
+                  </button>
+                </div>
+                <input
+                  id="pf-email"
+                  type="email"
+                  class="profile-input"
+                  formControlName="email"
+                  [readonly]="!isEditingPersonal()"
+                />
+              </div>
+
+              <div class="profile-field">
+                <span class="profile-field__label">Role</span>
+                <div>
+                  <span class="profile-id__badge profile-id__badge--inline" [ngClass]="roleBadgeClass()">
+                    {{ profile()?.role || '—' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="profile-actions" *ngIf="isEditingPersonal()" @editActionsEnter>
+                <button
+                  type="button"
+                  class="profile-btn profile-btn--primary"
+                  (click)="savePersonal()"
+                  [disabled]="savingPersonal() || personalForm.invalid"
+                >
+                  <span *ngIf="savingPersonal()" class="pi pi-spin pi-spinner" aria-hidden="true"></span>
+                  <span>{{ savingPersonal() ? 'Saving…' : 'Save changes' }}</span>
+                </button>
+                <button type="button" class="profile-btn profile-btn--ghost" (click)="cancelEditPersonal()" [disabled]="savingPersonal()">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 2 : toute la gestion photo (choix, prévisualisation, Save, Remove) -->
+          <div
+            class="profile-tab-panel"
+            id="profile-photo-panel"
+            *ngIf="activeTab() === 1"
+            @tabEnter
+            role="tabpanel"
+            aria-label="Profile photo"
+          >
+            <div
+              class="profile-drop"
+              [class.profile-drop--over]="dragOver()"
+              [class.profile-drop--has-preview]="photoPreviewUrl() || savedAvatarTabSrc()"
+              (click)="onProfilePhotoZoneClick($event, avatarFileInput)"
+              (keydown)="onProfilePhotoZoneKeydown($event, avatarFileInput)"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="'Upload profile photo'"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+            >
+              <!-- Nouvelle sélection : prévisualisation avant enregistrement -->
+              <ng-container *ngIf="photoPreviewUrl(); else savedOrEmpty">
+                <div class="profile-drop__preview-wrap" @photoPreviewEnter>
+                  <img [src]="photoPreviewUrl()!" alt="Preview" class="profile-drop__preview-img" />
+                  <div class="profile-drop__preview-overlay">
+                    <button type="button" class="profile-drop__change" (click)="onChangePhotoClick($event, avatarFileInput)">
+                      <span class="pi pi-image"></span> Change
+                    </button>
+                  </div>
+                </div>
+              </ng-container>
+              <ng-template #savedOrEmpty>
+                <!-- Photo déjà enregistrée : même zone, remplacement par clic ou drag -->
+                <ng-container *ngIf="savedAvatarTabSrc(); else emptyDropTpl">
+                  <div class="profile-drop__preview-wrap profile-drop__preview-wrap--saved" @photoPreviewEnter>
+                    <img [src]="savedAvatarTabSrc()!" alt="Current profile photo" class="profile-drop__preview-img" />
+                    <div class="profile-drop__preview-overlay">
+                      <button type="button" class="profile-drop__change" (click)="onChangePhotoClick($event, avatarFileInput)">
+                        <span class="pi pi-image"></span> Change
+                      </button>
+                    </div>
+                  </div>
+                  <p class="profile-drop__subhint">Current photo — click this area or drag to replace · JPG, PNG, WEBP — max 2&nbsp;MB</p>
+                </ng-container>
+                <ng-template #emptyDropTpl>
+                  <span class="pi pi-cloud-upload profile-drop__icon" aria-hidden="true"></span>
+                  <p class="profile-drop__text">Drag &amp; drop your photo here, or click to browse</p>
+                  <p class="profile-drop__hint">JPG, PNG, WEBP — max 2&nbsp;MB</p>
+                </ng-template>
+              </ng-template>
+            </div>
+
+            <div class="profile-photo-actions" *ngIf="photoPreviewUrl() || avatarFile()">
+              <button
+                type="button"
+                class="profile-btn profile-btn--primary"
+                (click)="saveAvatar()"
+                [disabled]="avatarSaving() || !avatarFile()"
+              >
+                <span *ngIf="avatarSaving()" class="pi pi-spin pi-spinner" aria-hidden="true"></span>
+                <span>{{ avatarSaving() ? 'Saving…' : 'Save photo' }}</span>
+              </button>
+              <button type="button" class="profile-link profile-link--danger" (click)="removePhotoSelection()" [disabled]="avatarSaving()">
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 3 -->
+          <div class="profile-tab-panel" *ngIf="activeTab() === 2" @tabEnter role="tabpanel">
+            <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()" class="profile-form">
+              <div class="profile-field">
+                <label class="profile-field__label" for="pw-current">Current password</label>
+                <div class="profile-input-row">
+                  <input
+                    id="pw-current"
+                    [type]="showPassword().current ? 'text' : 'password'"
+                    class="profile-input profile-input--with-toggle"
+                    formControlName="currentPassword"
+                    autocomplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    class="profile-input-toggle"
+                    (click)="togglePwField('current')"
+                    [attr.aria-label]="showPassword().current ? 'Hide password' : 'Show password'"
+                  >
+                    <span class="pi" [ngClass]="showPassword().current ? 'pi-eye-slash' : 'pi-eye'"></span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="profile-field">
+                <label class="profile-field__label" for="pw-new">New password</label>
+                <div class="profile-input-row">
+                  <input
+                    id="pw-new"
+                    [type]="showPassword().new ? 'text' : 'password'"
+                    class="profile-input profile-input--with-toggle"
+                    formControlName="newPassword"
+                    autocomplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    class="profile-input-toggle"
+                    (click)="togglePwField('new')"
+                    [attr.aria-label]="showPassword().new ? 'Hide password' : 'Show password'"
+                  >
+                    <span class="pi" [ngClass]="showPassword().new ? 'pi-eye-slash' : 'pi-eye'"></span>
+                  </button>
+                </div>
+                <app-password-strength [password]="passwordForm.get('newPassword')?.value ?? ''"></app-password-strength>
+              </div>
+
+              <div class="profile-field">
+                <label class="profile-field__label" for="pw-confirm">Confirm new password</label>
+                <div class="profile-input-row">
+                  <input
+                    id="pw-confirm"
+                    [type]="showPassword().confirm ? 'text' : 'password'"
+                    class="profile-input profile-input--with-toggle"
+                    formControlName="confirmPassword"
+                    autocomplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    class="profile-input-toggle"
+                    (click)="togglePwField('confirm')"
+                    [attr.aria-label]="showPassword().confirm ? 'Hide password' : 'Show password'"
+                  >
+                    <span class="pi" [ngClass]="showPassword().confirm ? 'pi-eye-slash' : 'pi-eye'"></span>
+                  </button>
+                </div>
+                <p class="profile-field__err" *ngIf="passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched">
+                  Passwords do not match.
+                </p>
+              </div>
+
+              <button type="submit" class="profile-btn profile-btn--primary" [disabled]="savingPassword() || passwordForm.invalid">
+                <span *ngIf="savingPassword()" class="pi pi-spin pi-spinner" aria-hidden="true"></span>
+                <span>{{ savingPassword() ? 'Updating…' : 'Update password' }}</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- TAB 4 -->
+          <div class="profile-tab-panel" *ngIf="activeTab() === 3" @tabEnter role="tabpanel">
+            <div class="profile-danger" [class.profile-danger--shake]="deleteShake()">
+              <span class="pi pi-exclamation-triangle profile-danger__icon" aria-hidden="true"></span>
+              <h3 class="profile-danger__title">Delete my account</h3>
+              <p class="profile-danger__text">
+                This action is permanent. All your data associated with this account may be removed.
+              </p>
+              <label class="profile-danger__label" for="del-confirm">Type DELETE to confirm</label>
+              <input
+                id="del-confirm"
+                type="text"
+                class="profile-input profile-danger__input"
+                [formControl]="deleteConfirmControl"
+                autocomplete="off"
+                placeholder="DELETE"
+              />
+              <button
+                type="button"
+                class="profile-btn profile-btn--danger"
+                [class.profile-btn--muted]="deleteConfirmControl.value !== 'DELETE'"
+                (click)="deleteAccount()"
+                [disabled]="deletingAccount()"
+              >
+                <span *ngIf="deletingAccount()" class="pi pi-spin pi-spinner" aria-hidden="true"></span>
+                <span>{{ deletingAccount() ? 'Deleting…' : 'Delete account' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</div>

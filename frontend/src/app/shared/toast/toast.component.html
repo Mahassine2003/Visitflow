@@ -1,0 +1,14 @@
+<ng-container *ngIf="toastService.state$ | async as t">
+  <div class="vf-toast" [@toastEnter] [class.vf-toast--success]="t.type === 'success'" [class.vf-toast--error]="t.type === 'error'" [class.vf-toast--info]="t.type === 'info'">
+    <span class="vf-toast__icon pi" [ngClass]="{
+        'pi-check-circle': t.type === 'success',
+        'pi-times-circle': t.type === 'error',
+        'pi-info-circle': t.type === 'info'
+      }" aria-hidden="true"></span>
+    <p class="vf-toast__msg">{{ t.message }}</p>
+    <button type="button" class="vf-toast__close" (click)="toastService.dismiss()" aria-label="Close">
+      <span class="pi pi-times" aria-hidden="true"></span>
+    </button>
+    <div class="vf-toast__bar" aria-hidden="true"></div>
+  </div>
+</ng-container>

@@ -1,0 +1,42 @@
+<div class="min-h-screen flex bg-background">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-secondary text-white flex flex-col">
+    <div class="px-4 py-4 border-b border-emerald-900/40">
+      <div class="text-lg font-bold">VisitFlow Supplier</div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto pt-2 pr-2 pb-2 pl-4">
+      <p-menu [model]="menuItems"></p-menu>
+    </div>
+
+    <div class="mt-auto p-3 border-t border-emerald-900/40">
+      <button
+        type="button"
+        (click)="logout()"
+        class="w-full btn-primary gap-2"
+      >
+        <span class="pi pi-sign-out text-xs" aria-hidden="true"></span>
+        <span>Log out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Topbar -->
+    <header
+      class="h-14 border-b border-emerald-100/60 flex items-center justify-between px-6 bg-background"
+    >
+      <div class="text-sm font-medium text-slate-700">Supplier</div>
+      <div class="flex items-center gap-4 text-sm text-slate-500">
+        <span class="pi pi-user text-emerald-400"></span>
+        <span>Supplier</span>
+      </div>
+    </header>
+
+    <!-- Routed content -->
+    <main class="flex-1 p-6">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

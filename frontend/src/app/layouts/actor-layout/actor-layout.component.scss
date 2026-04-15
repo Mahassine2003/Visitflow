@@ -1,0 +1,101 @@
+:host {
+  display: block;
+}
+
+:host ::ng-deep .vf-sidebar {
+  background: #06143a;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vf-sidebar__logo-wrap {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vf-sidebar__menu {
+  padding-top: 10px;
+}
+
+:host ::ng-deep .vf-sidebar .p-menu {
+  border: 0;
+  background: transparent;
+  padding: 10px 0 0;
+}
+
+.vf-sidebar__menu {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+:host ::ng-deep .vf-sidebar .p-menu .p-menu-list {
+  background: #f5f6f8;
+  border-radius: 8px;
+  padding: 8px 0;
+}
+
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link {
+  margin: 0;
+  padding: 12px 18px;
+  background: transparent;
+  border-radius: 0;
+  transition: background 0.15s ease;
+}
+
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-icon,
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-text {
+  color: #5f6773 !important;
+}
+
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-icon {
+  font-size: 20px;
+}
+
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link-active,
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link-active:hover {
+  background: transparent;
+}
+
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link-active .p-menuitem-text,
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link-active .p-menuitem-icon {
+  color: #5f6773 !important;
+}
+
+/* Active route (clicked menu item) -> orange icon + text, like reference screenshot */
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link.router-link-active .p-menuitem-text,
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link.router-link-active .p-menuitem-icon,
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link[aria-current='page'] .p-menuitem-text,
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link[aria-current='page'] .p-menuitem-icon,
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link-active .p-menuitem-text,
+:host ::ng-deep .vf-sidebar .p-menu .p-menuitem-link-active .p-menuitem-icon {
+  color: #e87722 !important;
+}
+
+.vf-sidebar__footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vf-sidebar__logout {
+  border: 0;
+  border-radius: 8px;
+  background: #ea8a00;
+  color: #fff;
+  padding: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  transition: filter 0.2s ease;
+}
+
+.vf-sidebar__logout:hover {
+  filter: brightness(0.95);
+}

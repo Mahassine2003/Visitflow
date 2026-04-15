@@ -1,0 +1,36 @@
+<div
+  class="vf-float"
+  [class.vf-float--error]="control.invalid && control.touched"
+  [class.vf-float--ok]="showValidIcon"
+>
+  <div class="vf-float__inner">
+    <i [class]="icon + ' vf-float__icon'" aria-hidden="true"></i>
+    <input
+      class="vf-float__input"
+      [id]="inputId"
+      [type]="effectiveType"
+      [formControl]="control"
+      [attr.autocomplete]="autocomplete"
+      placeholder=" "
+    />
+    <label class="vf-float__label" [for]="inputId">{{ label }}</label>
+    @if (showValidIcon) {
+      <i class="pi pi-check vf-float__valid" aria-hidden="true"></i>
+    }
+    @if (showToggle && type === 'password') {
+      <button
+        type="button"
+        class="vf-float__toggle"
+        (click)="showPassword = !showPassword"
+        [attr.title]="showPassword ? 'Hide password' : 'Show password'"
+        [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+      >
+        <i
+          [attr.class]="'pi ' + (showPassword ? 'pi-eye-slash' : 'pi-eye')"
+          aria-hidden="true"
+        ></i>
+      </button>
+    }
+  </div>
+  <div class="vf-float__underline" aria-hidden="true"></div>
+</div>

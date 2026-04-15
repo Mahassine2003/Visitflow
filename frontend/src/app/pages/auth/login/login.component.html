@@ -1,0 +1,71 @@
+<div class="auth-page auth-page--login" @authFieldsEnter>
+  <header class="auth-page__header">
+    <h1 class="auth-page__title">Welcome back</h1>
+    <p class="auth-page__lead">Sign in to VisitFlow</p>
+  </header>
+
+  @if (showSuccess) {
+    <div class="auth-success" @authSuccessPop>
+      <span class="auth-success__ring" aria-hidden="true"></span>
+      <i class="pi pi-check auth-success__icon" aria-hidden="true"></i>
+      <span class="auth-success__text">You’re in</span>
+    </div>
+  }
+
+  <form
+    class="auth-page__form"
+    [formGroup]="form"
+    (ngSubmit)="submit()"
+    [@authFormShake]="shakeState"
+  >
+    <div class="vf-anim-field">
+      <app-floating-input
+        [control]="emailCtrl"
+        label="Email"
+        type="email"
+        icon="pi pi-envelope"
+        inputId="login-email"
+        autocomplete="username"
+      />
+      @if (email?.invalid && email?.touched) {
+        <p class="auth-page__err">Enter a valid email address.</p>
+      }
+    </div>
+
+    <div class="vf-anim-field">
+      <app-floating-input
+        [control]="passwordCtrl"
+        label="Password"
+        type="password"
+        icon="pi pi-lock"
+        inputId="login-password"
+        autocomplete="current-password"
+        [showToggle]="true"
+      />
+      @if (password?.invalid && password?.touched) {
+        <p class="auth-page__err">Password must be at least 6 characters.</p>
+      }
+    </div>
+
+    @if (error) {
+      <p class="auth-page__err auth-page__err--global">{{ error }}</p>
+    }
+
+    <button
+      type="submit"
+      class="auth-btn"
+      [disabled]="loading"
+      [class.auth-btn--loading]="loading"
+    >
+      @if (loading) {
+        <span class="auth-btn__spinner" aria-hidden="true"></span>
+      }
+      <span>{{ loading ? 'Signing in…' : 'Sign in' }}</span>
+    </button>
+  </form>
+
+  <p class="auth-page__footer">
+    No account yet?
+    <a routerLink="/register">Create an account</a>
+  </p>
+</div>

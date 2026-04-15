@@ -1,0 +1,268 @@
+<div class="page-enter space-y-4">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Interventions</h1>
+      <p class="page-subtitle">Monitor intervention lifecycle, controls, and detailed records.</p>
+    </div>
+    <button
+      pButton
+      type="button"
+      icon="pi pi-refresh"
+      label="Refresh"
+      class="p-button-primary"
+      (click)="load()"
+      [disabled]="loading"
+    >
+    </button>
+  </div>
+
+  <div class="card table-scroll">
+  <p-table
+    [value]="interventions"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="10"
+    dataKey="id"
+    [expandedRowKeys]="expandedRowKeys"
+    rowExpandMode="multiple"
+    styleClass="p-datatable-sm"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 3rem"></th>
+        <th>Plant</th>
+        <th>Title</th>
+        <th>Visit</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Status</th>
+        <th class="w-28">PDF</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-i let-expanded="expanded">
+      <tr [class.intervention-card--focused]="userFocusedInterventionId === i.id">
+        <td>
+          <button
+            type="button"
+            pButton
+            class="p-button-text p-button-sm"
+            [pRowToggler]="i"
+            [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+          ></button>
+        </td>
+        <td class="text-sm text-slate-700">{{ i.plantName || '—' }}</td>
+        <td>{{ i.title }}</td>
+        <td class="text-xs">{{ i.visitKey }}</td>
+        <td>{{ i.startDate }} {{ i.startTime }}</td>
+        <td>{{ i.endDate }} {{ i.endTime }}</td>
+        <td><p-tag [value]="i.status" [severity]="severity(i.status)" /></td>
+        <td>
+          <button
+            pButton
+            type="button"
+            class="p-button-text p-button-sm"
+            label="PDF"
+            (click)="openPdf(i.id); $event.stopPropagation()"
+          ></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="rowexpansion" let-i>
+      <tr>
+        <td colspan="8" class="p-0 border-t border-slate-200 bg-slate-50/80">
+          <div class="p-4 space-y-4 text-sm">
+            <div class="text-xs text-slate-500">#{{ i.id }}</div>
+            <div class="space-y-2">
+              <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Description</span>
+              <p class="text-sm text-slate-700 line-clamp-6 mt-0.5">{{ i.description }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2 border-t border-slate-200 pt-3">
+              <button
+                type="button"
+                class="btn-primary text-sm inline-flex items-center gap-2"
+                (click)="openAddElement(i.id)"
+              >
+                <span class="text-lg font-light leading-none">+</span>
+                <span>Add item</span>
+              </button>
+              <button
+                *ngIf="isHse()"
+                type="button"
+                class="btn-outline text-sm"
+                (click)="openAddMeasure(i.id)"
+              >
+                Add measures
+              </button>
+              <button
+                *ngIf="isHse()"
+                type="button"
+                class="btn-outline text-sm"
+                (click)="openHseForm(i.id)"
+              >
+                HSE form
+              </button>
+              <div *ngIf="isHse()" class="flex gap-2 flex-wrap">
+                <button type="button" class="btn-primary text-xs" (click)="approveHse(i.id, true)">
+                  Approve HSE
+                </button>
+                <button type="button" class="btn-outline text-xs" (click)="approveHse(i.id, false)">
+                  Reject
+                </button>
+              </div>
+            </div>
+
+            <div
+              *ngIf="cachedDetail(i.id) as d"
+              class="rounded-lg border border-slate-200 bg-white p-3 space-y-3 text-sm"
+            >
+              <div class="font-semibold text-slate-800 border-b border-slate-200 pb-2">Overall form</div>
+
+              <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                <dt class="text-slate-500">Period</dt>
+                <dd>{{ d.startDate }} {{ d.startTime }} → {{ d.endDate }} {{ d.endTime }}</dd>
+                <dt class="text-slate-500">PPI</dt>
+                <dd>{{ d.ppi }}</dd>
+                <dt class="text-slate-500">Min. personal / min. zones</dt>
+                <dd>{{ d.minPersonnel }} / {{ d.minZone }}</dd>
+                <dt class="text-slate-500">HSE validation</dt>
+                <dd>{{ d.hseApprovalStatus }}</dd>
+              </dl>
+
+              <div *ngIf="d.firePermitDetails || d.heightPermitDetails || d.hseFormDetails" class="space-y-2 text-xs">
+                <div *ngIf="d.firePermitDetails">
+                  <span class="font-medium text-slate-700">Fire permit</span>
+                  <p class="text-slate-600 whitespace-pre-wrap mt-0.5">{{ d.firePermitDetails }}</p>
+                </div>
+                <div *ngIf="d.heightPermitDetails">
+                  <span class="font-medium text-slate-700">Work at height</span>
+                  <p class="text-slate-600 whitespace-pre-wrap mt-0.5">{{ d.heightPermitDetails }}</p>
+                </div>
+                <div *ngIf="d.hseFormDetails">
+                  <span class="font-medium text-slate-700">HSE form</span>
+                  <p class="text-slate-600 whitespace-pre-wrap mt-0.5">{{ d.hseFormDetails }}</p>
+                </div>
+              </div>
+
+              <div>
+                <div class="font-medium text-slate-700 mb-1">Items ({{ d.elements.length }})</div>
+                <div *ngIf="d.elements.length > 0" class="space-y-2">
+                  <div
+                    *ngFor="let el of d.elements"
+                    class="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs"
+                  >
+                    <div class="flex flex-wrap items-baseline justify-between gap-1">
+                      <span class="font-medium text-slate-800">{{ el.elementTypeName }} · {{ el.label }}</span>
+                      <span class="text-[10px] uppercase text-slate-400">{{ el.context }}</span>
+                    </div>
+                    <div *ngIf="elementOptions(el).length > 0" class="mt-2 space-y-2 border-t border-slate-100 pt-2">
+                      <div *ngFor="let opt of elementOptions(el)" class="space-y-0.5">
+                        <label class="block text-[11px] text-slate-600">{{ opt.label }}</label>
+                        <input
+                          class="input w-full text-xs py-1.5"
+                          [ngModel]="fieldValue(el, opt.id)"
+                          (ngModelChange)="onFieldValueChange(el, opt.id, $event)"
+                          (blur)="saveElementFields(i.id, el)"
+                          [name]="'opt-' + i.id + '-' + el.id + '-' + opt.id"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="d.safetyMeasures.length">
+                <div class="font-medium text-slate-700 mb-1">Safety measures</div>
+                <ul class="list-disc pl-4 space-y-0.5 text-xs text-slate-600">
+                  <li *ngFor="let m of d.safetyMeasures">{{ m.description }} ({{ m.addedBy }})</li>
+                </ul>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="text-xs text-primary underline"
+              (click)="getDetail(i.id, undefined, true)"
+              *ngIf="!detailCache.has(i.id)"
+            >
+              Load
+            </button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  </div>
+
+  <p-dialog
+    header="Add item"
+    [(visible)]="showElementDialog"
+    [modal]="true"
+    [style]="{ width: 'min(480px, 95vw)' }"
+  >
+    <div class="space-y-3" *ngIf="selectedInterventionId">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Item type</label>
+        <p-dropdown
+          [options]="elementTypes"
+          [(ngModel)]="newElement.elementTypeId"
+          optionLabel="name"
+          optionValue="id"
+          styleClass="w-full"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Label</label>
+        <input class="input w-full" [(ngModel)]="newElement.label" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Context</label>
+        <select class="input w-full" [(ngModel)]="newElement.context">
+          <option [ngValue]="0">Intervention</option>
+          <option [ngValue]="1">HSE</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" class="btn-outline" (click)="showElementDialog = false">Cancel</button>
+        <button type="button" class="btn-primary" (click)="saveElement()">OK</button>
+      </div>
+    </div>
+  </p-dialog>
+
+  <p-dialog
+    header="HSE form"
+    [(visible)]="showHseFormDialog"
+    [modal]="true"
+    [style]="{ width: 'min(520px, 95vw)' }"
+  >
+    <div class="space-y-3">
+      <label class="block text-sm text-slate-700">HSE content</label>
+      <textarea [(ngModel)]="hseFormText" rows="6" class="input w-full"></textarea>
+      <label class="block text-sm text-slate-700">Comment</label>
+      <textarea [(ngModel)]="hseCommentText" rows="3" class="input w-full"></textarea>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="btn-outline" (click)="showHseFormDialog = false">Close</button>
+        <button type="button" class="btn-primary" (click)="saveHseForm()">Save</button>
+      </div>
+    </div>
+  </p-dialog>
+
+  <p-dialog
+    header="Add safety measure"
+    [(visible)]="showMeasureDialog"
+    [modal]="true"
+    [style]="{ width: 'min(480px, 95vw)' }"
+  >
+    <div class="space-y-3">
+      <textarea
+        [(ngModel)]="newMeasureDescription"
+        rows="4"
+        class="input w-full"
+      ></textarea>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="btn-outline" (click)="showMeasureDialog = false">Cancel</button>
+        <button type="button" class="btn-primary" (click)="saveMeasure()">Save</button>
+      </div>
+    </div>
+  </p-dialog>
+</div>

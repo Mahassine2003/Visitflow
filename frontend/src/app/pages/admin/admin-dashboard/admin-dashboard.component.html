@@ -1,0 +1,34 @@
+<div class="space-y-8">
+  <div>
+    <h1 class="text-xl font-semibold text-slate-800">Administrator dashboard</h1>
+    <p class="text-sm text-slate-600 mt-1">Quick access and blacklist request review.</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+    <a
+      routerLink="/app/zones"
+      class="rounded-lg border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-sm transition flex items-center gap-3"
+    >
+      <span class="pi pi-map text-2xl text-slate-600"></span>
+      <div>
+        <div class="font-medium text-slate-800">Zones</div>
+        <div class="text-xs text-slate-500">List, create, edit</div>
+      </div>
+    </a>
+    <a
+      routerLink="/app/type-of-works"
+      class="rounded-lg border border-slate-200 bg-white p-4 hover:border-slate-300 hover:shadow-sm transition flex items-center gap-3"
+    >
+      <span class="pi pi-list text-2xl text-slate-600"></span>
+      <div>
+        <div class="font-medium text-slate-800">Types of Work</div>
+        <div class="text-xs text-slate-500">List, create, requirements</div>
+      </div>
+    </a>
+  </div>
+
+  <section class="border-t border-slate-200 pt-6">
+    <h2 class="font-medium text-slate-800 mb-4">Blacklist review</h2>
+    <app-blacklist-requests [embedded]="true" />
+  </section>
+</div>

@@ -1,0 +1,65 @@
+<div class="auth-layout">
+  <div class="auth-layout__frame">
+  <aside
+    class="auth-layout__visual"
+    (mousemove)="onVisualMove($event)"
+    (mouseleave)="onVisualLeave()"
+  >
+    <div class="auth-layout__mesh" aria-hidden="true"></div>
+    <div class="auth-layout__orbs" aria-hidden="true">
+      <span class="orb orb--1"></span>
+      <span class="orb orb--2"></span>
+      <span class="orb orb--3"></span>
+    </div>
+    <div class="auth-layout__grid" aria-hidden="true"></div>
+
+    <div
+      class="auth-layout__brand"
+      [style.transform]="
+        'translate3d(' + parallaxX + 'px,' + parallaxY + 'px,0)'
+      "
+    >
+      <img
+        src="assets/TE_Connectivity_logo.svg"
+        alt="TE Connectivity"
+        class="auth-layout__logo"
+        width="180"
+        height="97"
+      />
+      <p class="auth-layout__tagline">
+        Seamless visitor management, engineered for excellence
+      </p>
+    </div>
+
+    <div
+      class="auth-layout__stat-card"
+      [style.transform]="
+        'translate3d(' + parallaxX * 0.6 + 'px,' + parallaxY * 0.6 + 'px,0)'
+      "
+    >
+      <div class="auth-layout__stat-value">142</div>
+      <div class="auth-layout__stat-label">visitors managed today</div>
+      <svg
+        class="auth-layout__sparkline"
+        viewBox="0 0 120 32"
+        aria-hidden="true"
+      >
+        <polyline
+          class="auth-layout__sparkline-line"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          points="0,24 16,20 32,22 48,12 64,16 80,8 96,14 112,6 120,10"
+        />
+      </svg>
+    </div>
+  </aside>
+
+  <main class="auth-layout__form">
+    <div class="auth-layout__form-surface" [@authShellRoute]="prepareRoute(outlet)">
+      <router-outlet #outlet="outlet"></router-outlet>
+    </div>
+  </main>
+  </div>
+</div>
