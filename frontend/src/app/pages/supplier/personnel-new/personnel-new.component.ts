@@ -114,7 +114,8 @@ export class PersonnelNewComponent implements OnInit, OnDestroy {
 
   insuranceSource: 'ai' | 'manual' = 'ai';
   insurance1Result: InsuranceResult | null = null;
-  insuranceFile: File | null = null;
+  insuranceAiFile: File | null = null;
+  insuranceManualFile: File | null = null;
   manualInsuranceIssue = '';
   manualInsuranceExpiry = '';
   manualInsuranceValid = true;
@@ -190,23 +191,16 @@ export class PersonnelNewComponent implements OnInit, OnDestroy {
   setInsuranceSource(next: 'ai' | 'manual'): void {
     if (this.insuranceSource === next) return;
     this.insuranceSource = next;
-    this.insurance1Result = null;
-    this.insuranceFile = null;
-    this.manualInsuranceIssue = '';
-    this.manualInsuranceExpiry = '';
-    this.manualInsuranceValid = true;
+    // Keep uploaded insurance data when switching mode.
+    // This prevents losing the selected file/results unintentionally.
     this.manualFileDragOver = false;
-    if (this.manualInsuranceFileRef?.nativeElement) {
-      this.manualInsuranceFileRef.nativeElement.value = '';
-    }
     this.cdr.markForCheck();
   }
 
   onManualInsuranceFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const f = input.files?.[0] ?? null;
-    this.insuranceFile = f;
-    this.insurance1Result = null;
+    this.insuranceManualFile = f;
     this.cdr.markForCheck();
   }
 
@@ -228,19 +222,24 @@ export class PersonnelNewComponent implements OnInit, OnDestroy {
     this.manualFileDragOver = false;
     const f = ev.dataTransfer?.files?.[0];
     if (f) {
-      this.insuranceFile = f;
-      this.insurance1Result = null;
+      this.insuranceManualFile = f;
       this.cdr.markForCheck();
     }
   }
 
   clearManualInsuranceFile(): void {
-    this.insuranceFile = null;
-    this.insurance1Result = null;
+    this.insuranceManualFile = null;
     if (this.manualInsuranceFileRef?.nativeElement) {
       this.manualInsuranceFileRef.nativeElement.value = '';
     }
     this.cdr.markForCheck();
+  }
+
+  openManualInsuranceFile(): void {
+    if (!this.insuranceManualFile) return;
+    const fileUrl = URL.createObjectURL(this.insuranceManualFile);
+    window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    setTimeout(() => URL.revokeObjectURL(fileUrl), 60000);
   }
 
   formatManualFileSize(bytes: number): string {
@@ -372,7 +371,9 @@ export class PersonnelNewComponent implements OnInit, OnDestroy {
 
     this.docError = null;
     const v = this.form.getRawValue();
-    if (!this.insuranceFile) {
+    const selectedInsuranceFile =
+      this.insuranceSource === 'ai' ? this.insuranceAiFile : this.insuranceManualFile;
+    if (!selectedInsuranceFile) {
       this.docError = 'Insurance document is required.';
       return;
     }
@@ -426,14 +427,14 @@ export class PersonnelNewComponent implements OnInit, OnDestroy {
 
         const uploads = [];
 
-        if (this.insuranceFile) {
+        if (selectedInsuranceFile) {
           const fd = new FormData();
           const ai = this.insuranceSource === 'ai';
           fd.append('isValid', ai ? String(!!this.insurance1Result?.isValid) : String(this.manualInsuranceValid));
           fd.append('issueDate', ai ? (this.insurance1Result?.startDate ?? '') : this.manualInsuranceIssue);
           fd.append('expiryDate', ai ? (this.insurance1Result?.endDate ?? '') : this.manualInsuranceExpiry);
           fd.append('validatedByAi', String(ai));
-          fd.append('file', this.insuranceFile);
+          fd.append('file', selectedInsuranceFile);
           uploads.push(this.api.post(`/api/insurance/${personnelId}/upload`, fd));
         }
 

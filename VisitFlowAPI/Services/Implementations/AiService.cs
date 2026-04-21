@@ -83,13 +83,8 @@ public class AiService : IAiService
             }
         }
 
-        // Règle métier : si aucune date d'expiration n'est trouvée, on considère l'assurance comme valide.
-        if (string.IsNullOrWhiteSpace(result.EndDate))
-        {
-            result.IsValid = true;
-            // Pas de libellé séparé : l’UI n’affiche que le badge VALID + année + date de début.
-            result.Status = null;
-        }
+        // Ne pas écraser IsValid / Status renvoyés par le microservice : la validité repose sur les dates
+        // détectées (expiration >= aujourd’hui, ou règles équivalentes côté Python).
 
         // Année OCR incomplète ou aberrante (ex. 202 au lieu de 2026) : dériver du début si possible.
         if (result.Year is < 2000 or > 2100)

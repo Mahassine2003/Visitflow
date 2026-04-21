@@ -2,7 +2,7 @@
   #fileInput
   type="file"
   hidden
-  accept="image/*,.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg,image/jpg"
   (change)="onFileSelected($event)"
 />
 
@@ -23,12 +23,6 @@
         <line x1="12" y1="3" x2="12" y2="15" />
       </svg>
     </div>
-    <p class="upload-zone__title">Drop your file here</p>
-    <div class="upload-zone__or" aria-hidden="true">
-      <span class="upload-zone__or-line"></span>
-      <span class="upload-zone__or-text">or</span>
-      <span class="upload-zone__or-line"></span>
-    </div>
     <button
       type="button"
       class="upload-zone__browse"
@@ -37,6 +31,7 @@
       Browse files
     </button>
     <p class="upload-zone__formats">PDF, JPG, PNG · Max 10MB</p>
+    <p *ngIf="fileRuleError" class="upload-zone__err" role="alert">{{ fileRuleError }}</p>
   </div>
 </ng-container>
 
@@ -83,20 +78,15 @@
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
           <circle cx="12" cy="12" r="3" />
         </svg>
-        View file
+        View
       </button>
-
-      <div class="file-selected-card__status" *ngIf="loading">
-        <span class="file-selected-card__status-spinner" aria-hidden="true"></span>
-        <span>Analyzing…</span>
-      </div>
 
       <div class="file-selected-card__status file-selected-card__status--ok" *ngIf="!loading && result?.isValid && !detectError">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
           <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
-        <span>Verified</span>
+        <span>Valide</span>
       </div>
 
       <div class="file-selected-card__status file-selected-card__status--bad" *ngIf="!loading && result && !result.isValid && !detectError">
@@ -105,7 +95,7 @@
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span>Failed</span>
+        <span>Invalide</span>
       </div>
 
       <div class="file-selected-card__status file-selected-card__status--bad" *ngIf="!loading && detectError">
@@ -114,20 +104,35 @@
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
-        <span>Failed</span>
+        <span>Invalide</span>
       </div>
     </div>
 
     <p *ngIf="detectError" class="file-selected-card__api-err">{{ detectError }}</p>
 
-    <div *ngIf="result && result.isValid" class="analysis-result-panel">
+    <p *ngIf="result && !loading && !detectError" class="file-selected-card__validity-summary">
+      {{ validitySummary(result) }}
+    </p>
+
+    <div
+      *ngIf="result && !loading && !detectError"
+      class="analysis-result-panel"
+      [class.analysis-result-panel--invalid]="!result.isValid"
+    >
       <div class="analysis-result-panel__head">
         <svg class="analysis-result-panel__shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path d="M9 12l2 2 4-4" />
+          <ng-container *ngIf="result.isValid">
+            <path d="M9 12l2 2 4-4" />
+          </ng-container>
+          <ng-container *ngIf="!result.isValid">
+            <path d="M15 9l-6 6M9 9l6 6" />
+          </ng-container>
         </svg>
-        <span class="analysis-result-panel__title">AI Verified</span>
-        <span class="analysis-result-panel__badge">✓ Done</span>
+        <span class="analysis-result-panel__title">Analyse IA</span>
+        <span class="analysis-result-panel__badge" [class.analysis-result-panel__badge--bad]="!result.isValid">
+          {{ result.isValid ? '✓ Terminé' : 'Dates à vérifier' }}
+        </span>
       </div>
       <div class="analysis-result-panel__rows">
         <div

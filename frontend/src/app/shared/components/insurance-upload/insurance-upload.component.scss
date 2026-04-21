@@ -40,32 +40,6 @@
   color: #e87722;
 }
 
-.upload-zone__title {
-  font-family: var(--font-heading, 'Syne', sans-serif);
-  font-size: 14px;
-  font-weight: 700;
-  color: #1a1f36;
-  margin: 0;
-}
-
-.upload-zone__or {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 180px;
-}
-
-.upload-zone__or-line {
-  flex: 1;
-  height: 1px;
-  background: #e5e7eb;
-}
-
-.upload-zone__or-text {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
 .upload-zone__browse {
   background: #fff;
   border: 1.5px solid #e5e7eb;
@@ -87,6 +61,15 @@
   font-size: 11px;
   color: #9ca3af;
   margin: 0;
+}
+
+.upload-zone__err {
+  margin: 4px 0 0;
+  max-width: 320px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+  line-height: 1.4;
 }
 
 .file-selected-card {
@@ -297,6 +280,14 @@
   line-height: 1.4;
 }
 
+.file-selected-card__validity-summary {
+  margin: 0 18px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: #374151;
+}
+
 .analysis-result-panel {
   margin: 0 18px 16px;
   border: 1.5px solid #d1fae5;
@@ -309,6 +300,7 @@
 .analysis-result-panel__head {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin-bottom: 12px;
   flex-wrap: wrap;
@@ -335,6 +327,24 @@
   padding: 2px 8px;
   border-radius: 999px;
   font-weight: 600;
+}
+
+.analysis-result-panel--invalid {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.analysis-result-panel--invalid .analysis-result-panel__shield {
+  color: #dc2626;
+}
+
+.analysis-result-panel--invalid .analysis-result-panel__title {
+  color: #991b1b;
+}
+
+.analysis-result-panel__badge--bad {
+  background: #fecaca;
+  color: #991b1b;
 }
 
 .analysis-result-panel__rows {

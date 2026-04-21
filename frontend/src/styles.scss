@@ -289,6 +289,12 @@ h3 {
   display: none !important;
 }
 
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  border-radius: 16px !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
 @media (max-width: 1024px) {
   .layout-main {
     padding: 24px;

@@ -359,6 +359,8 @@ def _parse_first_date_in_blob(blob: str) -> date | None:
 def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
     t = _normalize_text(_arabic_digits_to_ascii(text))
     t_l = t.lower()
+    preferred_start: date | None = None
+    preferred_end: date | None = None
 
     _d_pat = r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
 
@@ -374,7 +376,7 @@ def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
         if mn is not None:
             d_found = _safe_date(y, mn, dday)
             if d_found and _is_plausible_insurance_date(d_found):
-                return (d_found, None, y)
+                preferred_start = preferred_start or d_found
 
     # Anglais : «April 14; 2021» / «incepted on April 14, 2021» (mois avant jour)
     m_en_md = re.search(
@@ -389,7 +391,7 @@ def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
         if mon in _MONTHS:
             d_found = _safe_date(y, _MONTHS[mon], dday)
             if d_found and _is_plausible_insurance_date(d_found):
-                return (d_found, None, y)
+                preferred_start = preferred_start or d_found
 
     # Libellés arabes (effet / expiration) — avant FR/EN
     m_ar_eff = re.search(
@@ -407,9 +409,10 @@ def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
             d1 = None
         if d2 and not _is_plausible_insurance_date(d2):
             d2 = None
-        if d1 is not None or d2 is not None:
-            year = d2.year if d2 else (d1.year if d1 else None)
-            return (d1, d2, year)
+        if d1 is not None:
+            preferred_start = preferred_start or d1
+        if d2 is not None:
+            preferred_end = preferred_end or d2
 
     # labelled fields ("Date d'effet", "date d'expiration") have priority
     m_eff = re.search(
@@ -420,6 +423,35 @@ def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
         rf"(?i)\bdate\s*d[’']?\s*expiration\b.{{0,80}}?{_d_pat}",
         t,
     )
+    # FR : échéance / fin de contrat (souvent la date de fin de police)
+    m_fr_echeance = re.search(
+        rf"(?i)\b(?:date\s*(?:de\s*)?(?:échéance|echeance)|fin\s*(?:de\s*)?validité|"
+        rf"échéance\s*(?:du\s*)?(?:contrat|police))\b.{{0,100}}?{_d_pat}",
+        t,
+    )
+    if m_fr_echeance and not m_exp:
+        m_exp = m_fr_echeance
+
+    # EN : effective / expiration (libellés courants sur polices bilingues)
+    m_en_start_lbl = re.search(
+        rf"(?i)\b(?:effective\s*date|coverage\s*(?:begins?|starts?)|policy\s*start|"
+        rf"date\s*of\s*commencement|inception\s*date|period\s*from)\b.{{0,100}}?{_d_pat}",
+        t,
+    )
+    m_en_end_lbl = re.search(
+        rf"(?i)\b(?:expir(?:y|ation)\s*date|coverage\s*ends?|policy\s*end|valid\s*until|"
+        rf"renewal\s*date|period\s*(?:to|until|through))\b.{{0,100}}?{_d_pat}",
+        t,
+    )
+    if m_en_start_lbl:
+        d_en_s = _parse_date_expr(m_en_start_lbl.group(1))
+        if d_en_s and _is_plausible_insurance_date(d_en_s):
+            preferred_start = preferred_start or d_en_s
+    if m_en_end_lbl:
+        d_en_e = _parse_date_expr(m_en_end_lbl.group(1))
+        if d_en_e and _is_plausible_insurance_date(d_en_e):
+            preferred_end = preferred_end or d_en_e
+
     if m_eff:
         d1 = _parse_date_expr(m_eff.group(1))
         d2 = _parse_date_expr(m_exp.group(1)) if m_exp else None
@@ -427,9 +459,18 @@ def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
             d1 = None
         if d2 and not _is_plausible_insurance_date(d2):
             d2 = None
-        if d1 is not None or d2 is not None:
-            year = d2.year if d2 else (d1.year if d1 else None)
-            return (d1, d2, year)
+        # Ne pas retourner trop tôt avec une seule date : on garde la préférence,
+        # puis on laisse la détection globale tenter de retrouver une date de fin.
+        if d1 is not None:
+            preferred_start = d1
+        if d2 is not None:
+            preferred_end = d2
+            preferred_start = preferred_start or d1
+    elif m_exp:
+        # Ex. libellé « date d'échéance » / « fin de validité » sans ligne « date d'effet » détectée.
+        d2 = _parse_date_expr(m_exp.group(1))
+        if d2 and _is_plausible_insurance_date(d2):
+            preferred_end = preferred_end or d2
 
     # Many contracts state only a start date ("pour prendre effet le ...") without an explicit end date.
     m_start_only = re.search(
@@ -439,7 +480,7 @@ def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
     if m_start_only:
         d1 = _parse_date_expr(m_start_only.group(1))
         if d1 and _is_plausible_insurance_date(d1):
-            return (d1, None, d1.year)
+            preferred_start = preferred_start or d1
 
     # common phrasing without "du": "<date> au <date>"
     year_pat = r"(?:19|20)\s*\d\s*\d"
@@ -545,6 +586,27 @@ def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
 
     if candidates:
         candidates = sorted(set(candidates))
+        if preferred_start is not None:
+            # Si on a une date d'effet fiable, tenter d'associer la meilleure date de fin
+            # détectée globalement (strictement postérieure à la date de début).
+            later = [d for d in candidates if d > preferred_start]
+            if preferred_end is not None:
+                end = preferred_end
+                start = preferred_start
+                if end < start:
+                    start, end = end, start
+                return (start, end, end.year)
+            if later:
+                end = max(later)
+                return (preferred_start, end, end.year)
+
+        if preferred_end is not None and preferred_start is None:
+            start = candidates[0]
+            end = preferred_end
+            if end < start:
+                start, end = end, start
+            return (start, end, end.year)
+
         if len(candidates) == 1:
             # Un seul date détectée: on la traite comme startDate uniquement.
             only = candidates[0]
@@ -553,13 +615,22 @@ def _extract_dates(text: str) -> tuple[date | None, date | None, int | None]:
         end = candidates[-1]
         # Sans libellé expiration ni plage « du … au … » : deux dates dans le même mois et proches
         # correspondent souvent à du bruit OCR (ex. effet au 1er + autre jour du mois), pas à une fin de contrat.
+        # Même mois et très proches : souvent bruit OCR (ex. jour du mois mal lu), pas début + fin de police.
         if (
             start.year == end.year
             and start.month == end.month
-            and 0 <= (end - start).days <= 45
+            and 0 <= (end - start).days <= 10
         ):
             return (start, None, start.year)
         return (start, end, end.year)
+
+    if preferred_start is not None or preferred_end is not None:
+        if preferred_start is not None and preferred_end is not None:
+            start = min(preferred_start, preferred_end)
+            end = max(preferred_start, preferred_end)
+            return (start, end, end.year)
+        only = preferred_start or preferred_end
+        return (only, None, only.year if only else None)
 
     years = [int(y) for y in re.findall(r"\b(20\d{2})\b", t)]
     y_words = _parse_year_from_words(t)
@@ -619,7 +690,7 @@ async def insurance_ocr(file: UploadFile = File(...)):
                     )
                 )
                 if not has_date_like:
-                    pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+                    pix = page.get_pixmap(matrix=fitz.Matrix(2.5, 2.5))
                     if pix.colorspace and pix.colorspace.n >= 4:
                         pix = fitz.Pixmap(fitz.csRGB, pix)
                     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)

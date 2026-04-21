@@ -11,7 +11,9 @@
   width: 100%;
   padding: clamp(1rem, 3vw, 2rem);
   box-sizing: border-box;
-  background: #e5e7eb;
+  background:
+    linear-gradient(rgba(10, 16, 36, 0.56), rgba(10, 16, 36, 0.56)),
+    url('/assets/auth-space-bg.png') center / cover no-repeat;
 }
 
 /* Prevent giant PrimeIcons glyphs (can look like huge orange/blue “X” if font scales wrong) */
@@ -33,12 +35,11 @@
 .auth-layout__frame {
   display: flex;
   width: 100%;
-  max-width: 1120px;
-  min-height: min(720px, calc(100vh - 2 * clamp(1rem, 3vw, 2rem)));
+  max-width: 1020px;
+  min-height: min(660px, calc(100vh - 2 * clamp(1rem, 3vw, 2rem)));
   border-radius: 20px;
   overflow: hidden;
   background: #fff;
-  border: 1px solid rgba(26, 31, 54, 0.1);
   box-shadow:
     0 4px 6px -1px rgba(26, 31, 54, 0.06),
     0 24px 48px -12px rgba(26, 31, 54, 0.18);
@@ -51,7 +52,10 @@
   min-height: 100%;
   align-self: stretch;
   overflow: hidden;
-  background: var(--color-dark, #1a1f36);
+  background:
+    linear-gradient(rgba(12, 18, 41, 0.42), rgba(12, 18, 41, 0.42)),
+    url('/assets/auth-space-bg.png') center / cover no-repeat,
+    var(--color-dark, #1a1f36);
   color: #fff;
 }
 

@@ -3,8 +3,10 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  OnChanges,
   OnDestroy,
   Output,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -19,6 +21,21 @@ interface InsuranceResult {
   startDate?: string | null;
   endDate?: string | null;
   rawText?: string | null;
+}
+
+const MAX_INSURANCE_BYTES = 10 * 1024 * 1024;
+
+function isAllowedInsuranceFile(file: File): boolean {
+  const name = (file.name || '').toLowerCase();
+  const type = (file.type || '').toLowerCase();
+  const extOk = /\.(pdf|jpe?g|png)$/i.test(name);
+  const typeOk =
+    type === 'application/pdf' ||
+    type === 'image/jpeg' ||
+    type === 'image/jpg' ||
+    type === 'image/png' ||
+    type === 'image/pjpeg';
+  return extOk || typeOk;
 }
 
 @Component({
@@ -42,9 +59,11 @@ interface InsuranceResult {
     ]),
   ],
 })
-export class InsuranceUploadComponent implements OnDestroy {
+export class InsuranceUploadComponent implements OnDestroy, OnChanges {
   /** Libellé affiché au-dessus du champ fichier (optionnel ; le redesign masque si vide). */
   @Input() label = 'File';
+  @Input() persistedFile: File | null = null;
+  @Input() persistedResult: InsuranceResult | null = null;
   @Output() resultChange = new EventEmitter<InsuranceResult>();
   @Output() fileChange = new EventEmitter<File | null>();
 
@@ -58,6 +77,8 @@ export class InsuranceUploadComponent implements OnDestroy {
   result: InsuranceResult | null = null;
   /** Message d'erreur réseau / API (affiché si l'analyse échoue). */
   detectError: string | null = null;
+  /** Fichier refusé (format / taille) avant envoi à l’IA. */
+  fileRuleError: string | null = null;
 
   isDragOver = false;
 
@@ -65,6 +86,25 @@ export class InsuranceUploadComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.revokeObjectUrl();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('persistedFile' in changes) {
+      const incoming = this.persistedFile;
+      if (!incoming) {
+        if (this.file) this.applyFile(null);
+      } else if (!this.file || !this.isSameFile(this.file, incoming)) {
+        this.applyFile(incoming);
+      }
+    }
+
+    if ('persistedResult' in changes) {
+      if (this.persistedResult) {
+        this.result = this.persistedResult;
+      } else if (!this.loading) {
+        this.result = null;
+      }
+    }
   }
 
   onFileSelected(event: Event): void {
@@ -77,11 +117,26 @@ export class InsuranceUploadComponent implements OnDestroy {
   applyFile(file: File | null): void {
     this.result = null;
     this.detectError = null;
+    this.fileRuleError = null;
     this.previewUrl = null;
     this.revokeObjectUrl();
     this.fileType = null;
 
     if (!file) {
+      this.file = null;
+      this.fileChange.emit(null);
+      return;
+    }
+
+    if (file.size > MAX_INSURANCE_BYTES) {
+      this.fileRuleError = `Fichier trop volumineux (max. 10 Mo). Taille actuelle : ${this.formatSize(file.size)}.`;
+      this.file = null;
+      this.fileChange.emit(null);
+      return;
+    }
+    if (!isAllowedInsuranceFile(file)) {
+      this.fileRuleError =
+        'Format non accepté. Utilisez uniquement PDF, JPG ou PNG (comme indiqué : « PDF, JPG, PNG · Max 10 Mo »).';
       this.file = null;
       this.fileChange.emit(null);
       return;
@@ -191,5 +246,27 @@ export class InsuranceUploadComponent implements OnDestroy {
   formatSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
     return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  /** Texte court après analyse : police aux dates valides ou non. */
+  validitySummary(result: InsuranceResult | null): string {
+    if (!result) return '';
+    if (result.isValid) {
+      return 'Valide : les dates détectées indiquent une assurance encore en vigueur (date de fin ≥ aujourd’hui, ou règle équivalente du document).';
+    }
+    if ((result.status || '').toUpperCase() === 'UNKNOWN') {
+      return 'Invalide : impossible d’extraire des dates de police de façon fiable. Vérifiez la qualité du scan ou utilisez l’envoi manuel.';
+    }
+    return 'Invalide : la date de fin de couverture est dépassée ou les dates ne permettent pas de valider la police.';
+  }
+
+  private isSameFile(a: File | null, b: File | null): boolean {
+    if (!a || !b) return false;
+    return (
+      a.name === b.name &&
+      a.size === b.size &&
+      a.type === b.type &&
+      a.lastModified === b.lastModified
+    );
   }
 }

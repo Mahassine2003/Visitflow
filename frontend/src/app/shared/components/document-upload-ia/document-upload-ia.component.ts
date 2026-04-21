@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api.service';
 
 export type DocumentUploadSource = 'ai' | 'manual';
@@ -18,7 +19,7 @@ export interface DocumentIaResult {
 @Component({
   selector: 'app-document-upload-ia',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './document-upload-ia.component.html',
   styleUrl: './document-upload-ia.component.scss',
 })
@@ -37,6 +38,8 @@ export class DocumentUploadIaComponent implements OnDestroy {
   fileType: 'image' | 'pdf' | 'word' | null = null;
   loading = false;
   result: DocumentIaResult | null = null;
+  manualStartDate = '';
+  manualEndDate = '';
 
   constructor(private api: ApiService) {}
 
@@ -63,6 +66,8 @@ export class DocumentUploadIaComponent implements OnDestroy {
     this.previewUrl = null;
     this.revokeObjectUrl();
     this.fileType = null;
+    this.manualStartDate = '';
+    this.manualEndDate = '';
   }
 
   onFileSelected(event: Event): void {
@@ -104,9 +109,17 @@ export class DocumentUploadIaComponent implements OnDestroy {
     }
 
     if (this.source === 'manual') {
-      this.result = { validatedByAI: false, isValid: true };
-      this.resultChange.emit(this.result);
+      this.emitManualResult();
     }
+  }
+
+  clearFile(): void {
+    this.resetFileState();
+  }
+
+  onManualDatesChanged(): void {
+    if (this.source !== 'manual' || !this.file) return;
+    this.emitManualResult();
   }
 
   openFile(): void {
@@ -138,5 +151,20 @@ export class DocumentUploadIaComponent implements OnDestroy {
       URL.revokeObjectURL(this.viewUrl);
       this.viewUrl = null;
     }
+  }
+
+  formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  private emitManualResult(): void {
+    this.result = {
+      validatedByAI: false,
+      isValid: true,
+      startDate: this.manualStartDate || null,
+      endDate: this.manualEndDate || null,
+    };
+    this.resultChange.emit(this.result);
   }
 }
