@@ -37,6 +37,8 @@ interface Plant {
   name: string;
 }
 
+type Tac2SubSite = 'Toubkal' | 'Indus';
+
 interface InterventionResponse {
   id: number;
 }
@@ -133,6 +135,9 @@ export class InterventionWizardComponent implements OnInit {
   plants: Plant[] = [];
   /** Required before showing the rest of step 1 (intervention details). */
   selectedPlantId: number | null = null;
+  selectedTac2SubSite: Tac2SubSite | null = null;
+  pendingTac2PlantId: number | null = null;
+  readonly tac2SubSites: Tac2SubSite[] = ['Toubkal', 'Indus'];
 
   fieldDefinitions: InterventionWizardFieldDefinitionDto[] = [];
   fieldDefinitionsLoading = false;
@@ -310,7 +315,12 @@ export class InterventionWizardComponent implements OnInit {
 
   get selectedPlantLabel(): string {
     if (this.selectedPlantId == null) return '—';
-    return this.plants.find((p) => p.id === this.selectedPlantId)?.name ?? '—';
+    const selectedPlant = this.plants.find((p) => p.id === this.selectedPlantId);
+    if (!selectedPlant) return '—';
+    if (this.isTac2Plant(selectedPlant) && this.selectedTac2SubSite) {
+      return `${selectedPlant.name} - ${this.selectedTac2SubSite}`;
+    }
+    return selectedPlant.name;
   }
 
   /** Checked personnel (validation recap). */
@@ -495,13 +505,42 @@ export class InterventionWizardComponent implements OnInit {
     });
   }
 
-  selectPlant(id: number): void {
-    this.selectedPlantId = id;
+  private isTac2Plant(plant: Plant): boolean {
+    return plant.name.trim().toUpperCase() === 'TAC2';
+  }
+
+  onPlantCardClick(plant: Plant): void {
+    if (this.isTac2Plant(plant)) {
+      this.pendingTac2PlantId = plant.id;
+      this.selectedPlantId = null;
+      this.selectedTac2SubSite = null;
+      this.cdr.detectChanges();
+      return;
+    }
+    this.pendingTac2PlantId = null;
+    this.selectedTac2SubSite = null;
+    this.selectedPlantId = plant.id;
+    this.cdr.detectChanges();
+  }
+
+  selectTac2SubSite(subSite: Tac2SubSite): void {
+    if (this.pendingTac2PlantId == null) return;
+    this.selectedPlantId = this.pendingTac2PlantId;
+    this.selectedTac2SubSite = subSite;
+    this.pendingTac2PlantId = null;
+    this.cdr.detectChanges();
+  }
+
+  cancelTac2SubSiteSelection(): void {
+    this.pendingTac2PlantId = null;
+    this.selectedTac2SubSite = null;
     this.cdr.detectChanges();
   }
 
   clearPlantSelection(): void {
     this.selectedPlantId = null;
+    this.selectedTac2SubSite = null;
+    this.pendingTac2PlantId = null;
     this.cdr.detectChanges();
   }
 

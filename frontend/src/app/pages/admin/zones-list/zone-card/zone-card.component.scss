@@ -1,0 +1,97 @@
+.zone-card {
+  background: #fff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 28px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.zone-card:hover,
+.zone-card.hovered {
+  border-color: #e87722;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: #fef3e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #e87722;
+}
+
+.zone-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+}
+
+.zone-desc {
+  font-size: 15px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.card-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 0.5px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge-active {
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.interventions-count {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.btn-edit {
+  background: #fef3e8;
+  color: #e87722;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 15px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-del {
+  background: #fef5f5;
+  color: #dc2626;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 15px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}

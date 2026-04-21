@@ -1,3 +1,144 @@
+.personnel-wizard-page {
+  max-width: 1220px;
+  padding: 8px 8px 20px;
+}
+
+.wizard-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.personnel-wizard-page .page-title {
+  margin: 0;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 38px;
+  font-weight: 700;
+  color: #0b1629;
+  letter-spacing: -0.3px;
+}
+
+.personnel-wizard-page .page-subtitle {
+  margin-top: 6px;
+  color: #7a8fa6;
+  font-size: 14px;
+}
+
+:host ::ng-deep .p-stepper {
+  border: 1px solid #d8e1ea;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(2, 6, 23, 0.05);
+  overflow: hidden;
+}
+
+:host ::ng-deep .p-stepper-nav {
+  background: #f8fafc;
+  border-bottom: 1px solid #e6edf3;
+  padding: 10px 14px;
+}
+
+:host ::ng-deep .p-stepper .p-stepper-header .p-stepper-number {
+  width: 28px;
+  height: 28px;
+  background: #eff6ff;
+  color: #3b82f6;
+  border: 1px solid #dbeafe;
+}
+
+:host ::ng-deep .p-stepper .p-stepper-header.p-highlight .p-stepper-number {
+  background: #f97316;
+  color: #fff;
+  border-color: #f97316;
+}
+
+:host ::ng-deep .p-stepper .p-stepper-header .p-stepper-title {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+:host ::ng-deep .p-stepper .p-stepper-header.p-highlight .p-stepper-title {
+  color: #0b1629;
+}
+
+:host ::ng-deep .p-stepper-panels {
+  padding: 16px !important;
+  background: #fff;
+}
+
+.personnel-wizard-page form.space-y-4 {
+  display: grid;
+  gap: 16px;
+}
+
+.personnel-wizard-page .input {
+  width: 100%;
+  border: 1px solid #d8e1ea;
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14px;
+  outline: none;
+}
+
+.personnel-wizard-page .input:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.personnel-wizard-page .card {
+  border: 1px solid #d8e1ea;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+}
+
+.personnel-wizard-page .btn-primary {
+  border: 0;
+  border-radius: 10px;
+  background: #f97316;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 20px;
+  transition: all 0.2s ease;
+}
+
+.personnel-wizard-page .btn-primary:hover {
+  background: #ea670d;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(249, 115, 22, 0.22);
+}
+
+.personnel-wizard-page .btn-outline {
+  border: 1px solid #d8e1ea;
+  background: #fff;
+  color: #475569;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.personnel-wizard-page .btn-outline:hover {
+  border-color: #f97316;
+  color: #f97316;
+}
+
+@media (max-width: 768px) {
+  .personnel-wizard-page .page-title {
+    font-size: 32px;
+  }
+
+  :host ::ng-deep .p-stepper-panels {
+    padding: 12px !important;
+  }
+}
+
 .tow-list {
   background: linear-gradient(160deg, #fafafa 0%, #f4f4f5 100%);
   scroll-behavior: smooth;

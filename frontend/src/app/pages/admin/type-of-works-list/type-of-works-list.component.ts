@@ -30,6 +30,9 @@ export interface ComplianceRequirement {
 })
 export class TypeOfWorksListComponent implements OnInit {
   typeOfWorks: TypeOfWork[] = [];
+  page = 1;
+  readonly pageSize = 8;
+  documentRequirementCount = 0;
   loading = false;
   showForm = false;
   /** Case Training : affiche la zone pour ajouter des libellés de pièces (type API Document uniquement). */
@@ -63,6 +66,25 @@ export class TypeOfWorksListComponent implements OnInit {
     );
   }
 
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.typeOfWorks.length / this.pageSize));
+  }
+
+  get pages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  get pagedTypeOfWorks(): TypeOfWork[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.typeOfWorks.slice(start, start + this.pageSize);
+  }
+
+  get insuredCoveragePercent(): number {
+    if (this.typeOfWorks.length === 0) return 0;
+    const insured = this.typeOfWorks.filter((x) => x.requiresInsurance).length;
+    return Math.round((insured / this.typeOfWorks.length) * 100);
+  }
+
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
@@ -73,16 +95,59 @@ export class TypeOfWorksListComponent implements OnInit {
     this.loading = true;
     this.api.get<TypeOfWork[]>('/api/admin/type-of-works').subscribe({
       next: (data) => {
-        this.typeOfWorks = data;
+        this.typeOfWorks = data ?? [];
+        if (this.page > this.totalPages) this.page = this.totalPages;
+        this.loadDocumentMetric();
         this.loading = false;
       },
       error: () => (this.loading = false),
     });
   }
 
+  private loadDocumentMetric(): void {
+    const rows = this.typeOfWorks ?? [];
+    if (rows.length === 0) {
+      this.documentRequirementCount = 0;
+      return;
+    }
+    const calls: Observable<ComplianceRequirement[]>[] = rows.map((row) =>
+      this.api
+        .get<ComplianceRequirement[]>(`/api/type-of-work/${row.id}/requirements`)
+        .pipe(catchError(() => of([]))),
+    );
+    forkJoin(calls).subscribe({
+      next: (all) => {
+        this.documentRequirementCount = all.reduce((acc, reqs) => acc + (reqs?.length ?? 0), 0);
+      },
+      error: () => {
+        this.documentRequirementCount = rows.filter((x) => x.requiresTraining).length;
+      },
+    });
+  }
+
   toggleForm(): void {
     this.showForm = !this.showForm;
     if (!this.showForm) this.resetCreateForm();
+  }
+
+  goTo(p: number): void {
+    if (p >= 1 && p <= this.totalPages) this.page = p;
+  }
+
+  goFirst(): void {
+    this.page = 1;
+  }
+
+  goLast(): void {
+    this.page = this.totalPages;
+  }
+
+  goPrev(): void {
+    if (this.page > 1) this.page -= 1;
+  }
+
+  goNext(): void {
+    if (this.page < this.totalPages) this.page += 1;
   }
 
   private resetCreateForm(): void {

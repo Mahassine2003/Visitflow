@@ -1,79 +1,105 @@
-<div class="page-enter space-y-4">
+<div class="zones-page">
   <div class="page-header">
     <div>
       <h1 class="page-title">Zones</h1>
-      <p class="page-subtitle">Create and organize operational areas for interventions.</p>
+      <p class="page-subtitle">
+        Create and organize operational areas for interventions.
+      </p>
     </div>
-    <button pButton type="button" icon="pi pi-plus" label="New zone" class="p-button-primary" (click)="toggleForm()"></button>
-  </div>
-  <div *ngIf="showForm" class="card max-w-md flex gap-2 items-end flex-wrap">
-    <div class="flex-1 min-w-[140px]">
-      <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
-      <input [(ngModel)]="form.name" class="input w-full" />
-    </div>
-    <div class="flex-1 min-w-[140px]">
-      <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
-      <input [(ngModel)]="form.description" class="input w-full" />
-    </div>
-    <button pButton type="button" label="Create" class="p-button-primary" [loading]="submitting" (click)="submitZone()"></button>
-    <button pButton type="button" label="Cancel" class="p-button-text" (click)="toggleForm()"></button>
-  </div>
-  <div class="card table-scroll">
-  <p-table [value]="zones" [loading]="loading" [paginator]="true" [rows]="10" dataKey="id">
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th class="w-40"></th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-z>
-      <tr>
-        <td>{{ z.name }}</td>
-        <td>{{ z.description || '—' }}</td>
-        <td class="text-right whitespace-nowrap space-x-1">
-          <button
-            type="button"
-            class="btn-primary text-xs"
-            (click)="openEdit(z)"
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            class="text-xs px-2 py-1 rounded border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-            [class.opacity-60]="deletingId === z.id"
-            [disabled]="deletingId === z.id"
-            (click)="deleteZone(z)"
-          >
-            Delete
-          </button>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+    <button class="btn-primary" (click)="openCreate()">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+      New zone
+    </button>
   </div>
 
-  <p-dialog
-    header="Edit zone"
-    [(visible)]="editDialog"
-    [modal]="true"
-    [style]="{ width: 'min(480px, 95vw)' }"
-    (onHide)="closeEdit()"
-  >
-    <div *ngIf="editing" class="space-y-3">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
-        <input [(ngModel)]="editForm.name" class="input w-full" />
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5L12 4l8 5.5v9L12 20l-8-1.5z" />
+        </svg>
       </div>
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
-        <input [(ngModel)]="editForm.description" class="input w-full" />
-      </div>
-      <div class="flex gap-2 justify-end pt-2">
-        <button pButton type="button" label="Cancel" class="p-button-text" (click)="closeEdit()"></button>
-        <button pButton type="button" label="Save" class="p-button-primary" [loading]="editSubmitting" (click)="saveEdit()"></button>
+        <span class="stat-num">{{ zones().length }}</span>
+        <span class="stat-label">Total zones</span>
       </div>
     </div>
-  </p-dialog>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12.5l4 4L19 7.5" />
+        </svg>
+      </div>
+      <div>
+        <span class="stat-num">{{ zones().length }}</span>
+        <span class="stat-label">Active zones</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="5" width="16" height="15" rx="2" />
+          <path d="M8 3v4M16 3v4M4 10h16" />
+        </svg>
+      </div>
+      <div>
+        <span class="stat-num">{{ totalInterventions() }}</span>
+        <span class="stat-label">Interventions linked</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="zones-grid" @listAnimation>
+    @for (zone of pagedZones(); track zone.id) {
+      <app-zone-card
+        [zone]="zone"
+        (onEdit)="openEdit($event)"
+        (onDelete)="confirmDelete($event)"
+        @cardAnimation
+      />
+    } @empty {
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5L12 4l8 5.5v9L12 20l-8-1.5z" />
+        </svg>
+        <p class="empty-title">No zones yet</p>
+        <p class="empty-sub">Create your first operational zone.</p>
+        <button class="btn-primary" (click)="openCreate()">New zone</button>
+      </div>
+    }
+  </div>
+
+  <div class="pagination">
+    <button (click)="goFirst()" [disabled]="page() === 1">«</button>
+    <button (click)="goPrev()" [disabled]="page() === 1">‹</button>
+    @for (p of pages(); track p) {
+      <button [class.active]="p === page()" (click)="goTo(p)">
+        {{ p }}
+      </button>
+    }
+    <button (click)="goNext()" [disabled]="page() === totalPages()">›</button>
+    <button (click)="goLast()" [disabled]="page() === totalPages()">»</button>
+  </div>
+
+  <app-zone-create-dialog
+    [visible]="createDialogVisible"
+    (closed)="closeCreate()"
+    (saved)="closeCreate(true)"
+  />
+
+  <app-zone-edit-dialog
+    [visible]="editDialogVisible"
+    [zone]="selectedZone"
+    (closed)="closeEdit()"
+    (saved)="closeEdit(true)"
+  />
+
+  <app-zone-delete-dialog
+    [visible]="deleteDialogVisible"
+    [zone]="selectedZone"
+    (closed)="closeDelete()"
+    (deleted)="closeDelete(true)"
+  />
 </div>

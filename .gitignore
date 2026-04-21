@@ -1,0 +1,14 @@
+# Build artifacts
+**/bin/
+**/obj/
+
+# Angular cache/build output
+frontend/.angular/
+frontend/dist/
+
+# Logs
+*.log
+
+# OS/editor files
+.DS_Store
+Thumbs.db

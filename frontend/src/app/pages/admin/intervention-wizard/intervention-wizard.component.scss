@@ -547,6 +547,36 @@
   color: #64748b;
 }
 
+.plant-gate__subsite {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.plant-gate__subsite-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.plant-gate__back {
+  margin-top: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary, #e87722);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.plant-gate__back:hover {
+  opacity: 0.85;
+}
+
 .plant-banner {
   display: flex;
   align-items: center;

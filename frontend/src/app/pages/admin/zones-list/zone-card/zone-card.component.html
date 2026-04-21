@@ -1,0 +1,19 @@
+<div class="zone-card" [class.hovered]="hovered" (mouseenter)="hovered = true" (mouseleave)="hovered = false">
+  <div class="card-top">
+    <div class="avatar">{{ (zone.name || "Z").charAt(0).toUpperCase() }}</div>
+    <div class="actions">
+      <button class="btn-edit" (click)="onEdit.emit(zone)">Edit</button>
+      <button class="btn-del" (click)="onDelete.emit(zone)">Delete</button>
+    </div>
+  </div>
+
+  <p class="zone-name">{{ zone.name }}</p>
+  <p class="zone-desc">{{ zone.description || "—" }}</p>
+
+  <div class="card-footer">
+    <span class="badge-active">Active</span>
+    <span class="interventions-count">
+      {{ zone.interventionCount ?? 0 }} interventions
+    </span>
+  </div>
+</div>

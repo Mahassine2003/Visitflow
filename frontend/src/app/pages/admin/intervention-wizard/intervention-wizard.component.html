@@ -42,19 +42,42 @@
         </div>
         <p class="plant-gate__hint">
           Each intervention is linked to a plant. Select <strong>TFZ</strong>, <strong>TAC1</strong>, or
-          <strong>TAC2</strong>, then the form will appear.
+          <strong>TAC2</strong>, then the form will appear. For <strong>TAC2</strong>, choose a sub-site
+          (<strong>Toubkal</strong> or <strong>Indus</strong>).
         </p>
-        <div class="plant-gate__grid">
-          <button
-            *ngFor="let pl of plants"
-            type="button"
-            class="plant-gate__card"
-            (click)="selectPlant(pl.id)"
-          >
-            <span class="plant-gate__card-title">{{ pl.name }}</span>
-            <span class="plant-gate__card-sub">Continue with this plant</span>
-          </button>
-        </div>
+        <ng-container *ngIf="pendingTac2PlantId == null; else tac2SubSiteChoice">
+          <div class="plant-gate__grid">
+            <button
+              *ngFor="let pl of plants"
+              type="button"
+              class="plant-gate__card"
+              (click)="onPlantCardClick(pl)"
+            >
+              <span class="plant-gate__card-title">{{ pl.name }}</span>
+              <span class="plant-gate__card-sub">Continue with this plant</span>
+            </button>
+          </div>
+        </ng-container>
+
+        <ng-template #tac2SubSiteChoice>
+          <div class="plant-gate__subsite">
+            <p class="plant-gate__subsite-title">TAC2 selected. Choose the sub-site:</p>
+            <div class="plant-gate__grid">
+              <button
+                *ngFor="let subSite of tac2SubSites"
+                type="button"
+                class="plant-gate__card"
+                (click)="selectTac2SubSite(subSite)"
+              >
+                <span class="plant-gate__card-title">{{ subSite }}</span>
+                <span class="plant-gate__card-sub">Continue with this sub-site</span>
+              </button>
+            </div>
+            <button type="button" class="plant-gate__back" (click)="cancelTac2SubSiteSelection()">
+              Back to plants
+            </button>
+          </div>
+        </ng-template>
         <p *ngIf="plants.length === 0" class="text-sm text-slate-500">Loading plants…</p>
       </div>
 

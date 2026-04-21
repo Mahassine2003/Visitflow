@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
@@ -60,7 +61,7 @@ interface PersonnelDocumentRow {
 @Component({
   selector: 'app-personnel-list',
   standalone: true,
-  imports: [CommonModule, TableModule, TagModule, ButtonModule, DialogModule],
+  imports: [CommonModule, FormsModule, TableModule, TagModule, ButtonModule, DialogModule],
   templateUrl: './personnel-list.component.html',
   styleUrl: './personnel-list.component.scss',
 })
@@ -68,6 +69,10 @@ export class PersonnelListComponent implements OnInit {
   personnel: Personnel[] = [];
   suppliers: SupplierRow[] = [];
   loading = false;
+  searchTerm = '';
+  statusFilter: 'all' | 'active' | 'blacklisted' = 'all';
+  page = 1;
+  readonly pageSize = 10;
 
   detailVisible = false;
   detail: Personnel | null = null;
@@ -91,6 +96,94 @@ export class PersonnelListComponent implements OnInit {
       error: () => {},
     });
     this.load();
+  }
+
+  get totalPersonnelCount(): number {
+    return this.personnel.length;
+  }
+
+  get blacklistedCount(): number {
+    return this.personnel.filter((p) => p.isBlacklisted).length;
+  }
+
+  get activeCount(): number {
+    return this.personnel.filter((p) => !p.isBlacklisted).length;
+  }
+
+  get filteredPersonnel(): Personnel[] {
+    const q = this.searchTerm.trim().toLowerCase();
+    return this.personnel.filter((p) => {
+      if (this.statusFilter === 'blacklisted' && !p.isBlacklisted) return false;
+      if (this.statusFilter === 'active' && p.isBlacklisted) return false;
+      if (!q) return true;
+      const supplier = this.supplierName(p.supplierId).toLowerCase();
+      return (
+        p.fullName.toLowerCase().includes(q) ||
+        p.cin.toLowerCase().includes(q) ||
+        p.fieldOfActivity.toLowerCase().includes(q) ||
+        (p.typeOfWorkName ?? '').toLowerCase().includes(q) ||
+        supplier.includes(q)
+      );
+    });
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredPersonnel.length / this.pageSize));
+  }
+
+  get pages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  get pagedPersonnel(): Personnel[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.filteredPersonnel.slice(start, start + this.pageSize);
+  }
+
+  get pageStartCount(): number {
+    if (this.filteredPersonnel.length === 0) return 0;
+    return (this.page - 1) * this.pageSize + 1;
+  }
+
+  get pageEndCount(): number {
+    if (this.filteredPersonnel.length === 0) return 0;
+    return Math.min(this.page * this.pageSize, this.filteredPersonnel.length);
+  }
+
+  setStatusFilter(filter: 'all' | 'active' | 'blacklisted'): void {
+    this.statusFilter = filter;
+    this.page = 1;
+  }
+
+  onSearchTermChange(): void {
+    this.page = 1;
+  }
+
+  goTo(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.page = page;
+  }
+
+  goPrev(): void {
+    if (this.page > 1) this.page -= 1;
+  }
+
+  goNext(): void {
+    if (this.page < this.totalPages) this.page += 1;
+  }
+
+  initials(fullName: string): string {
+    const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'P';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
+  }
+
+  avatarTone(id: number): 'tone-blue' | 'tone-teal' | 'tone-purple' {
+    const i = Math.abs(id) % 3;
+    if (i === 0) return 'tone-blue';
+    if (i === 1) return 'tone-teal';
+    return 'tone-purple';
   }
 
   supplierName(supplierId: number): string {
@@ -123,6 +216,7 @@ export class PersonnelListComponent implements OnInit {
             createdAt: (p['createdAt'] as string) ?? null,
           };
         });
+        if (this.page > this.totalPages) this.page = this.totalPages;
       },
       error: () => {},
       complete: () => (this.loading = false),
